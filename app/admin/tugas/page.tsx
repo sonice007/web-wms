@@ -6,23 +6,28 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import useModal from "@/hooks/use-modal";
 import {
-  useGetKategoriTugasListQuery,
-  useCreateKategoriTugasMutation,
-  useUpdateKategoriTugasMutation,
-  useDeleteKategoriTugasMutation,
-} from "@/services/admin/master/kategori-tugas.service";
-import { KategoriTugas } from "@/types/admin/master/kategori-tugas";
-import FormKategoriTugas from "@/components/form-modal/admin/master/kategori-tugas-form";
-import { Badge } from "@/components/ui/badge";
+  useGetTugasListQuery,
+  useCreateTugasMutation,
+  useUpdateTugasMutation,
+  useDeleteTugasMutation,
+} from "@/services/admin/tugas.service";
+import { Tugas } from "@/types/admin/tugas";
+import FormTugas from "@/components/form-modal/admin/tugas-form";
 import { Input } from "@/components/ui/input";
 import ActionsGroup from "@/components/admin-components/actions-group";
 import { Plus } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
-export default function KategoriTugasPage() {
-  const [form, setForm] = useState<Partial<KategoriTugas>>({
+export default function TugasPage() {
+  const [form, setForm] = useState<Partial<Tugas>>({
+    level_id: 0,
+    task_category_id: 0,
     name: "",
-    description: "",
-    status: true,
+    start_date: new Date(),
+    end_date: new Date(),
+    target: 0,
+    bonus: 0,
+    status: 1,
   });
   const [editingId, setEditingId] = useState<number | null>(null);
   const [readonly, setReadonly] = useState(false);
@@ -31,39 +36,48 @@ export default function KategoriTugasPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [query, setQuery] = useState("");
 
-  const { data, isLoading, refetch } = useGetKategoriTugasListQuery({
+  const { data, isLoading, refetch } = useGetTugasListQuery({
     page: currentPage,
     paginate: itemsPerPage,
+    search: query,
   });
 
   const categoryList = useMemo(() => data?.data || [], [data]);
   const lastPage = useMemo(() => data?.last_page || 1, [data]);
 
+  // Filter data based on query (if needed)
+  const filteredData = useMemo(() => {
+    if (!query) return categoryList;
+    return categoryList.filter((item: Tugas) =>
+      item.name?.toLowerCase().includes(query.toLowerCase())
+    );
+  }, [categoryList, query]);
+
   const [createCategory, { isLoading: isCreating }] =
-    useCreateKategoriTugasMutation();
+    useCreateTugasMutation();
   const [updateCategory, { isLoading: isUpdating }] =
-    useUpdateKategoriTugasMutation();
-  const [deleteCategory] = useDeleteKategoriTugasMutation();
+    useUpdateTugasMutation();
+  const [deleteCategory] = useDeleteTugasMutation();
 
   const handleSubmit = async () => {
     try {
       const payload = {
+        level_id: form.level_id || 0,
+        task_category_id: form.task_category_id || 0,
         name: form.name || "",
-        description: form.description || "",
-        status: form.status === undefined ? 1 : form.status ? 1 : 0,
+        start_date: form.start_date || new Date(),
+        end_date: form.end_date || new Date(),
+        target: form.target || 0,
+        bonus: form.bonus || 0,
+        status: form.status || 1,
       };
 
       if (editingId) {
         await updateCategory({ id: editingId, payload }).unwrap();
-        Swal.fire("Sukses", "Kategori Tugas diperbarui", "success");
+        Swal.fire("Sukses", "Tugas diperbarui", "success");
       } else {
-        // For create, if the API expects number, convert to 1/0
-        const createPayload = {
-          ...payload,
-          status: payload.status,
-        };
-        await createCategory(createPayload).unwrap();
-        Swal.fire("Sukses", "Kategori Tugas ditambahkan", "success");
+        await createCategory(payload).unwrap();
+        Swal.fire("Sukses", "Tugas ditambahkan", "success");
       }
 
       setForm({ name: "" });
@@ -76,22 +90,22 @@ export default function KategoriTugasPage() {
     }
   };
 
-  const handleEdit = (item: KategoriTugas) => {
+  const handleEdit = (item: Tugas) => {
     setForm({ ...item });
     setEditingId(item.id);
     setReadonly(false);
     openModal();
   };
 
-  const handleDetail = (item: KategoriTugas) => {
+  const handleDetail = (item: Tugas) => {
     setForm(item);
     setReadonly(true);
     openModal();
   };
 
-  const handleDelete = async (item: KategoriTugas) => {
+  const handleDelete = async (item: Tugas) => {
     const confirm = await Swal.fire({
-      title: "Yakin hapus Kategori Tugas?",
+      title: "Yakin hapus Tugas?",
       text: item.name,
       icon: "warning",
       showCancelButton: true,
@@ -102,22 +116,13 @@ export default function KategoriTugasPage() {
       try {
         await deleteCategory(item.id).unwrap();
         await refetch();
-        Swal.fire("Berhasil", "Kategori Tugas dihapus", "success");
+        Swal.fire("Berhasil", "Tugas dihapus", "success");
       } catch (error) {
-        Swal.fire("Gagal", "Gagal menghapus Kategori Tugas", "error");
+        Swal.fire("Gagal", "Gagal menghapus Tugas", "error");
         console.error(error);
       }
     }
   };
-
-  // Filter data based on search query
-  const filteredData = useMemo(() => {
-    if (!query) return categoryList;
-    return categoryList.filter(
-      (item) =>
-        item.name.toLowerCase().includes(query.toLowerCase())
-    );
-  }, [categoryList, query]);
 
   return (
     <div className="p-6 space-y-6">
@@ -126,7 +131,7 @@ export default function KategoriTugasPage() {
           {/* Kiri: filter */}
           <div className="w-full flex flex-col gap-3 sm:flex-row sm:items-center">
             <Input
-              placeholder="Cari kategori tugas..."
+              placeholder="Cari tugas..."
               value={query}
               onChange={(e) => {
                 const q = e.target.value;
@@ -139,7 +144,7 @@ export default function KategoriTugasPage() {
           {/* Kanan: aksi */}
           <div className="shrink-0 flex flex-wrap items-center gap-2">
             {/* Tambah data (opsional) */}
-            {openModal && <Button onClick={openModal}><Plus /> Kategori Tugas</Button>}
+            {openModal && <Button onClick={openModal}><Plus /> Tugas</Button>}
           </div>
         </div>
       </div>
@@ -150,8 +155,13 @@ export default function KategoriTugasPage() {
             <thead className="bg-muted text-left">
               <tr>
                 <th className="px-4 py-2">Aksi</th>
+                <th className="px-4 py-2">Level</th>
+                <th className="px-4 py-2">Kategori Tugas</th>
                 <th className="px-4 py-2">Nama</th>
-                <th className="px-4 py-2">Deskripsi</th>
+                <th className="px-4 py-2">Tanggal Mulai</th>
+                <th className="px-4 py-2">Tanggal Selesai</th>
+                <th className="px-4 py-2">Target</th>
+                <th className="px-4 py-2">Bonus</th>
                 <th className="px-4 py-2">Status</th>
               </tr>
             </thead>
@@ -180,10 +190,15 @@ export default function KategoriTugasPage() {
                         />
                       </div>
                     </td>
+                    <td className="px-4 py-2 font-medium">{item.level_name}</td>
+                    <td className="px-4 py-2 font-medium">{item.task_category_name}</td>
                     <td className="px-4 py-2 font-medium">{item.name}</td>
-                    <td className="px-4 py-2">{item.description}</td>
+                    <td className="px-4 py-2 font-medium">{item.start_date instanceof Date ? item.start_date.toLocaleDateString() : item.start_date}</td>
+                    <td className="px-4 py-2 font-medium">{item.end_date instanceof Date ? item.end_date.toLocaleDateString() : item.end_date}</td>
+                    <td className="px-4 py-2 font-medium">{item.target}</td>
+                    <td className="px-4 py-2 font-medium">{item.bonus}</td>
                     <td className="px-4 py-2">
-                      {item.status === true ? (
+                      {item.status === 1 ? (
                         <Badge variant="success">Active</Badge>
                       ) : (
                         <Badge variant="destructive">Inactive</Badge>
@@ -222,7 +237,7 @@ export default function KategoriTugasPage() {
 
       {isOpen && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
-          <FormKategoriTugas
+          <FormTugas
             form={form}
             setForm={setForm}
             onCancel={() => {

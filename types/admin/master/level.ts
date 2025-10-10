@@ -4,7 +4,7 @@ export interface Level {
   name: string;
   order: string;
   description: string;
-  status: number;
+  status: boolean;
 }
 
 export interface LevelResponse {

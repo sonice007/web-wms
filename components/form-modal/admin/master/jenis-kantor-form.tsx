@@ -103,9 +103,9 @@ export default function JenisKantorForm({
             <Label htmlFor="status">Status</Label>
             <select
               id="status"
-              value={form.status ?? 1}
+              value={typeof form.status === "boolean" ? (form.status ? 1 : 0) : form.status ?? 1}
               onChange={(e) =>
-                setForm({ ...form, status: Number(e.target.value) })
+                setForm({ ...form, status: e.target.value === "1" })
               }
               disabled={readonly}
               className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"

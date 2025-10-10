@@ -6,23 +6,29 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import useModal from "@/hooks/use-modal";
 import {
-  useGetKategoriTugasListQuery,
-  useCreateKategoriTugasMutation,
-  useUpdateKategoriTugasMutation,
-  useDeleteKategoriTugasMutation,
-} from "@/services/admin/master/kategori-tugas.service";
-import { KategoriTugas } from "@/types/admin/master/kategori-tugas";
-import FormKategoriTugas from "@/components/form-modal/admin/master/kategori-tugas-form";
-import { Badge } from "@/components/ui/badge";
+  useGetKantorListQuery,
+  useCreateKantorMutation,
+  useUpdateKantorMutation,
+  useDeleteKantorMutation,
+} from "@/services/admin/kantor.service";
+import { Kantor } from "@/types/admin/kantor";
+import FormKantor from "@/components/form-modal/admin/kantor-form";
 import { Input } from "@/components/ui/input";
 import ActionsGroup from "@/components/admin-components/actions-group";
 import { Plus } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
-export default function KategoriTugasPage() {
-  const [form, setForm] = useState<Partial<KategoriTugas>>({
+export default function KantorPage() {
+  const [form, setForm] = useState<Partial<Kantor>>({
+    office_type_id: 0,
+    province_id: "",
+    regency_id: "",
+    district_id: "",
+    village_id: "",
     name: "",
-    description: "",
-    status: true,
+    address: "",
+    phone: "",
+    status: true
   });
   const [editingId, setEditingId] = useState<number | null>(null);
   const [readonly, setReadonly] = useState(false);
@@ -31,39 +37,49 @@ export default function KategoriTugasPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [query, setQuery] = useState("");
 
-  const { data, isLoading, refetch } = useGetKategoriTugasListQuery({
+  const { data, isLoading, refetch } = useGetKantorListQuery({
     page: currentPage,
     paginate: itemsPerPage,
+    search: query,
   });
 
   const categoryList = useMemo(() => data?.data || [], [data]);
   const lastPage = useMemo(() => data?.last_page || 1, [data]);
 
+  // Filter data based on query (if needed)
+  const filteredData = useMemo(() => {
+    if (!query) return categoryList;
+    return categoryList.filter((item: Kantor) =>
+      item.name?.toLowerCase().includes(query.toLowerCase())
+    );
+  }, [categoryList, query]);
+
   const [createCategory, { isLoading: isCreating }] =
-    useCreateKategoriTugasMutation();
+    useCreateKantorMutation();
   const [updateCategory, { isLoading: isUpdating }] =
-    useUpdateKategoriTugasMutation();
-  const [deleteCategory] = useDeleteKategoriTugasMutation();
+    useUpdateKantorMutation();
+  const [deleteCategory] = useDeleteKantorMutation();
 
   const handleSubmit = async () => {
     try {
       const payload = {
+        office_type_id: form.office_type_id || 0,
+        province_id: form.province_id || "",
+        regency_id: form.regency_id || "",
+        district_id: form.district_id || "",
+        village_id: form.village_id || "",
         name: form.name || "",
-        description: form.description || "",
-        status: form.status === undefined ? 1 : form.status ? 1 : 0,
+        address: form.address || "",
+        phone: form.phone || "",
+        status: form.status || false
       };
 
       if (editingId) {
         await updateCategory({ id: editingId, payload }).unwrap();
-        Swal.fire("Sukses", "Kategori Tugas diperbarui", "success");
+        Swal.fire("Sukses", "Kantor diperbarui", "success");
       } else {
-        // For create, if the API expects number, convert to 1/0
-        const createPayload = {
-          ...payload,
-          status: payload.status,
-        };
-        await createCategory(createPayload).unwrap();
-        Swal.fire("Sukses", "Kategori Tugas ditambahkan", "success");
+        await createCategory(payload).unwrap();
+        Swal.fire("Sukses", "Kantor ditambahkan", "success");
       }
 
       setForm({ name: "" });
@@ -76,22 +92,22 @@ export default function KategoriTugasPage() {
     }
   };
 
-  const handleEdit = (item: KategoriTugas) => {
+  const handleEdit = (item: Kantor) => {
     setForm({ ...item });
     setEditingId(item.id);
     setReadonly(false);
     openModal();
   };
 
-  const handleDetail = (item: KategoriTugas) => {
+  const handleDetail = (item: Kantor) => {
     setForm(item);
     setReadonly(true);
     openModal();
   };
 
-  const handleDelete = async (item: KategoriTugas) => {
+  const handleDelete = async (item: Kantor) => {
     const confirm = await Swal.fire({
-      title: "Yakin hapus Kategori Tugas?",
+      title: "Yakin hapus Kantor?",
       text: item.name,
       icon: "warning",
       showCancelButton: true,
@@ -102,22 +118,13 @@ export default function KategoriTugasPage() {
       try {
         await deleteCategory(item.id).unwrap();
         await refetch();
-        Swal.fire("Berhasil", "Kategori Tugas dihapus", "success");
+        Swal.fire("Berhasil", "Kantor dihapus", "success");
       } catch (error) {
-        Swal.fire("Gagal", "Gagal menghapus Kategori Tugas", "error");
+        Swal.fire("Gagal", "Gagal menghapus Kantor", "error");
         console.error(error);
       }
     }
   };
-
-  // Filter data based on search query
-  const filteredData = useMemo(() => {
-    if (!query) return categoryList;
-    return categoryList.filter(
-      (item) =>
-        item.name.toLowerCase().includes(query.toLowerCase())
-    );
-  }, [categoryList, query]);
 
   return (
     <div className="p-6 space-y-6">
@@ -126,7 +133,7 @@ export default function KategoriTugasPage() {
           {/* Kiri: filter */}
           <div className="w-full flex flex-col gap-3 sm:flex-row sm:items-center">
             <Input
-              placeholder="Cari kategori tugas..."
+              placeholder="Cari kantor..."
               value={query}
               onChange={(e) => {
                 const q = e.target.value;
@@ -139,7 +146,7 @@ export default function KategoriTugasPage() {
           {/* Kanan: aksi */}
           <div className="shrink-0 flex flex-wrap items-center gap-2">
             {/* Tambah data (opsional) */}
-            {openModal && <Button onClick={openModal}><Plus /> Kategori Tugas</Button>}
+            {openModal && <Button onClick={openModal}><Plus /> Kantor</Button>}
           </div>
         </div>
       </div>
@@ -150,8 +157,11 @@ export default function KategoriTugasPage() {
             <thead className="bg-muted text-left">
               <tr>
                 <th className="px-4 py-2">Aksi</th>
-                <th className="px-4 py-2">Nama</th>
-                <th className="px-4 py-2">Deskripsi</th>
+                <th className="px-4 py-2">Provinsi</th>
+                <th className="px-4 py-2">Kota / Kabupaten</th>
+                <th className="px-4 py-2">Nama Kantor</th>
+                <th className="px-4 py-2">Alamat</th>
+                <th className="px-4 py-2">No. Handphone</th>
                 <th className="px-4 py-2">Status</th>
               </tr>
             </thead>
@@ -180,8 +190,11 @@ export default function KategoriTugasPage() {
                         />
                       </div>
                     </td>
+                    <td className="px-4 py-2 font-medium">{item.province_name}</td>
+                    <td className="px-4 py-2 font-medium">{item.regency_name}</td>
                     <td className="px-4 py-2 font-medium">{item.name}</td>
-                    <td className="px-4 py-2">{item.description}</td>
+                    <td className="px-4 py-2 font-medium">{item.address}</td>
+                    <td className="px-4 py-2 font-medium">{item.phone}</td>
                     <td className="px-4 py-2">
                       {item.status === true ? (
                         <Badge variant="success">Active</Badge>
@@ -222,7 +235,7 @@ export default function KategoriTugasPage() {
 
       {isOpen && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
-          <FormKategoriTugas
+          <FormKantor
             form={form}
             setForm={setForm}
             onCancel={() => {

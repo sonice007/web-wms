@@ -24,7 +24,7 @@ export default function LevelPage() {
     name: "",
     order: "",
     description: "",
-    status: 1,
+    status: true,
   });
   const [editingId, setEditingId] = useState<number | null>(null);
   const [readonly, setReadonly] = useState(false);
@@ -54,7 +54,7 @@ export default function LevelPage() {
         name: form.name || "",
         order: form.order || "",
         description: form.description || "",
-        status: form.status || 1,
+        status: form.status ? 1 : 0,
       };
 
       if (editingId) {
@@ -186,7 +186,7 @@ export default function LevelPage() {
                     <td className="px-4 py-2">{item.order}</td>
                     <td className="px-4 py-2">{item.description}</td>
                     <td className="px-4 py-2">
-                      {item.status === 1 ? (
+                      {item.status === true ? (
                         <Badge variant="success">Active</Badge>
                       ) : (
                         <Badge variant="destructive">Inactive</Badge>

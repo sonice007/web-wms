@@ -2,7 +2,7 @@ export interface JenisKantor {
   id: number;
   name: string;
   description: string;
-  status: number;
+  status: boolean;
 }
 
 export interface JenisKantorResponse {

@@ -12,6 +12,7 @@ import {
   Network,
   UserCog,
   ShieldCheck,
+  Wallet,
 } from "lucide-react";
 import Header from "@/components/admin-components/header";
 import Sidebar from "@/components/admin-components/sidebar";
@@ -58,6 +59,12 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, title }) => {
       href: "/admin/kantor",
     },
     {
+      id: "wallet",
+      label: "Wallet",
+      icon: <Wallet className="h-5 w-5" />,
+      href: "/admin/wallet",
+    },
+    {
       id: "task",
       label: "Tugas",
       icon: <ClipboardCheck className="h-5 w-5" />,
@@ -66,7 +73,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, title }) => {
         {
           id: "tugas/tugas-anggota",
           label: "Tugas Anggota",
-          href: "/admin/tugas/tugas-anggota",
+          href: "/admin/tugas",
         },
         {
           id: "tugas/hasil",

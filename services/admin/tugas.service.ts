@@ -1,17 +1,17 @@
 import { apiSlice } from "../base-query";
 import {
-  Kantor,
-  KantorResponse,
-  CreateKantorRequest,
-  UpdateKantorRequest,
-} from "@/types/admin/kantor";
+  Tugas,
+  TugasResponse,
+  CreateTugasRequest,
+  UpdateTugasRequest,
+} from "@/types/admin/tugas";
 
-export const kantorApi = apiSlice.injectEndpoints({
+export const tugasApi = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
-    // 🔍 Get All Kantor (with pagination)
-    getKantorList: builder.query<
+    // 🔍 Get All Tugas (with pagination)
+    getTugasList: builder.query<
       {
-        data: Kantor[];
+        data: Tugas[];
         last_page: number;
         current_page: number;
         total: number;
@@ -20,7 +20,7 @@ export const kantorApi = apiSlice.injectEndpoints({
       { page: number; paginate: number; search?: string }
     >({
       query: ({ page, paginate, search }) => ({
-        url: `/office/offices`,
+        url: `/task/tasks`,
         method: "GET",
         params: {
           page,
@@ -28,7 +28,7 @@ export const kantorApi = apiSlice.injectEndpoints({
           search,
         },
       }),
-      transformResponse: (response: KantorResponse) => ({
+      transformResponse: (response: TugasResponse) => ({
         data: response.data.data,
         last_page: response.data.last_page,
         current_page: response.data.current_page,
@@ -37,60 +37,60 @@ export const kantorApi = apiSlice.injectEndpoints({
       }),
     }),
 
-    // 🔍 Get Kantor by ID
-    getKantorById: builder.query<Kantor, number>({
+    // 🔍 Get Tugas by ID
+    getTugasById: builder.query<Tugas, number>({
       query: (id) => ({
-        url: `/office/offices/${id}`,
+        url: `/task/tasks/${id}`,
         method: "GET",
       }),
       transformResponse: (response: {
         code: number;
         message: string;
-        data: Kantor;
+        data: Tugas;
       }) => response.data,
     }),
 
-    // ➕ Create Kantor
-    createKantor: builder.mutation<
-      Kantor,
-      CreateKantorRequest
+    // ➕ Create Tugas
+    createTugas: builder.mutation<
+      Tugas,
+      CreateTugasRequest
     >({
       query: (payload) => ({
-        url: `/office/offices`,
+        url: `/task/tasks`,
         method: "POST",
         body: payload,
       }),
       transformResponse: (response: {
         code: number;
         message: string;
-        data: Kantor;
+        data: Tugas;
       }) => response.data,
     }),
 
-    // ✏️ Update Kantor by ID
-    updateKantor: builder.mutation<
-      Kantor,
-      { id: number; payload: UpdateKantorRequest }
+    // ✏️ Update Tugas by ID
+    updateTugas: builder.mutation<
+      Tugas,
+      { id: number; payload: UpdateTugasRequest }
     >({
       query: ({ id, payload }) => ({
-        url: `/office/offices/${id}`,
+        url: `/task/tasks/${id}`,
         method: "PUT",
         body: payload,
       }),
       transformResponse: (response: {
         code: number;
         message: string;
-        data: Kantor;
+        data: Tugas;
       }) => response.data,
     }),
 
-    // ❌ Delete Kantor by ID
-    deleteKantor: builder.mutation<
+    // ❌ Delete Tugas by ID
+    deleteTugas: builder.mutation<
       { code: number; message: string },
       number
     >({
       query: (id) => ({
-        url: `/office/offices/${id}`,
+        url: `/task/tasks/${id}`,
         method: "DELETE",
       }),
       transformResponse: (response: {
@@ -104,9 +104,9 @@ export const kantorApi = apiSlice.injectEndpoints({
 });
 
 export const {
-  useGetKantorListQuery,
-  useGetKantorByIdQuery,
-  useCreateKantorMutation,
-  useUpdateKantorMutation,
-  useDeleteKantorMutation,
-} = kantorApi;
+  useGetTugasListQuery,
+  useGetTugasByIdQuery,
+  useCreateTugasMutation,
+  useUpdateTugasMutation,
+  useDeleteTugasMutation,
+} = tugasApi;

@@ -22,7 +22,7 @@ export default function JenisKantorPage() {
   const [form, setForm] = useState<Partial<JenisKantor>>({
     name: "",
     description: "",
-    status: 1,
+    status: true,
   });
   const [editingId, setEditingId] = useState<number | null>(null);
   const [readonly, setReadonly] = useState(false);
@@ -50,7 +50,7 @@ export default function JenisKantorPage() {
       const payload = {
         name: form.name || "",
         description: form.description || "",
-        status: form.status || 1,
+        status: form.status === false ? 0 : 1,
       };
 
       if (editingId) {
@@ -178,7 +178,7 @@ export default function JenisKantorPage() {
                     <td className="px-4 py-2 font-medium">{item.name}</td>
                     <td className="px-4 py-2">{item.description}</td>
                     <td className="px-4 py-2">
-                      {item.status === 1 ? (
+                      {item.status === true ? (
                         <Badge variant="success">Active</Badge>
                       ) : (
                         <Badge variant="destructive">Inactive</Badge>
