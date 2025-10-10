@@ -1,17 +1,17 @@
 import { apiSlice } from "../../base-query";
 import {
-  KategoriTugas,
-  KategoriTugasResponse,
-  CreateKategoriTugasRequest,
-  UpdateKategoriTugasRequest,
-} from "@/types/admin/master/kategori-tugas";
+  JenisKantor,
+  JenisKantorResponse,
+  CreateJenisKantorRequest,
+  UpdateJenisKantorRequest,
+} from "@/types/admin/master/jenis-kantor";
 
-export const KategoriTugasApi = apiSlice.injectEndpoints({
+export const JenisKantorApi = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
-    // 🔍 Get All KategoriTugas (with pagination)
-    getKategoriTugasList: builder.query<
+    // 🔍 Get All JenisKantor (with pagination)
+    getJenisKantorList: builder.query<
       {
-        data: KategoriTugas[];
+        data: JenisKantor[];
         last_page: number;
         current_page: number;
         total: number;
@@ -20,7 +20,7 @@ export const KategoriTugasApi = apiSlice.injectEndpoints({
       { page: number; paginate: number; search?: string }
     >({
       query: ({ page, paginate, search }) => ({
-        url: `/master/task-categories`,
+        url: `/master/office-types`,
         method: "GET",
         params: {
           page,
@@ -28,7 +28,7 @@ export const KategoriTugasApi = apiSlice.injectEndpoints({
           search,
         },
       }),
-      transformResponse: (response: KategoriTugasResponse) => ({
+      transformResponse: (response: JenisKantorResponse) => ({
         data: response.data.data,
         last_page: response.data.last_page,
         current_page: response.data.current_page,
@@ -38,59 +38,59 @@ export const KategoriTugasApi = apiSlice.injectEndpoints({
     }),
 
     // 🔍 Get Simpanan Category by ID
-    getKategoriTugasById: builder.query<KategoriTugas, number>({
+    getJenisKantorById: builder.query<JenisKantor, number>({
       query: (id) => ({
-        url: `/master/task-categories/${id}`,
+        url: `/master/office-types/${id}`,
         method: "GET",
       }),
       transformResponse: (response: {
         code: number;
         message: string;
-        data: KategoriTugas;
+        data: JenisKantor;
       }) => response.data,
     }),
 
     // ➕ Create Simpanan Category
-    createKategoriTugas: builder.mutation<
-      KategoriTugas,
-      CreateKategoriTugasRequest
+    createJenisKantor: builder.mutation<
+      JenisKantor,
+      CreateJenisKantorRequest
     >({
       query: (payload) => ({
-        url: `/master/task-categories`,
+        url: `/master/office-types`,
         method: "POST",
         body: payload,
       }),
       transformResponse: (response: {
         code: number;
         message: string;
-        data: KategoriTugas;
+        data: JenisKantor;
       }) => response.data,
     }),
 
     // ✏️ Update Simpanan Category by ID
-    updateKategoriTugas: builder.mutation<
-      KategoriTugas,
-      { id: number; payload: UpdateKategoriTugasRequest }
+    updateJenisKantor: builder.mutation<
+      JenisKantor,
+      { id: number; payload: UpdateJenisKantorRequest }
     >({
       query: ({ id, payload }) => ({
-        url: `/master/task-categories/${id}`,
+        url: `/master/office-types/${id}`,
         method: "PUT",
         body: payload,
       }),
       transformResponse: (response: {
         code: number;
         message: string;
-        data: KategoriTugas;
+        data: JenisKantor;
       }) => response.data,
     }),
 
     // ❌ Delete Simpanan Category by ID
-    deleteKategoriTugas: builder.mutation<
+    deleteJenisKantor: builder.mutation<
       { code: number; message: string },
       number
     >({
       query: (id) => ({
-        url: `/master/task-categories/${id}`,
+        url: `/master/office-types/${id}`,
         method: "DELETE",
       }),
       transformResponse: (response: {
@@ -104,9 +104,9 @@ export const KategoriTugasApi = apiSlice.injectEndpoints({
 });
 
 export const {
-  useGetKategoriTugasListQuery,
-  useGetKategoriTugasByIdQuery,
-  useCreateKategoriTugasMutation,
-  useUpdateKategoriTugasMutation,
-  useDeleteKategoriTugasMutation,
-} = KategoriTugasApi;
+  useGetJenisKantorListQuery,
+  useGetJenisKantorByIdQuery,
+  useCreateJenisKantorMutation,
+  useUpdateJenisKantorMutation,
+  useDeleteJenisKantorMutation,
+} = JenisKantorApi;

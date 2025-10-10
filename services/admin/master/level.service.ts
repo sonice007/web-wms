@@ -17,14 +17,15 @@ export const levelApi = apiSlice.injectEndpoints({
         total: number;
         per_page: number;
       },
-      { page: number; paginate: number }
+      { page: number; paginate: number; search?: string }
     >({
-      query: ({ page, paginate }) => ({
+      query: ({ page, paginate, search }) => ({
         url: `/master/levels`,
         method: "GET",
         params: {
           page,
           paginate,
+          search,
         },
       }),
       transformResponse: (response: LevelResponse) => ({

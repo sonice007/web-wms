@@ -128,6 +128,18 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, title }) => {
           href: "/admin/master/level",
         },
         {
+          id: "konfigurasi/kategori-tugas",
+          label: "Kategori Tugas",
+          icon: <Network className="h-4 w-4" />,
+          href: "/admin/master/kategori-tugas",
+        },
+        {
+          id: "konfigurasi/jenis-kantor",
+          label: "Jenis Kantor",
+          icon: <Network className="h-4 w-4" />,
+          href: "/admin/master/jenis-kantor",
+        },
+        {
           id: "konfigurasi/pengelola",
           label: "Pengelola",
           icon: <UserCog className="h-4 w-4" />,

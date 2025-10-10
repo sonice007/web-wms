@@ -18,6 +18,8 @@ import { Pengumuman } from "@/types/admin/pengumuman";
 import FormPengumuman from "@/components/form-modal/admin/pengumuman-form";
 import { ProdukToolbar } from "@/components/ui/produk-toolbar";
 import ActionsGroup from "@/components/admin-components/actions-group";
+import { Plus } from "lucide-react";
+import { Input } from "@/components/ui/input";
 
 export default function PengumumanPage() {
   const [form, setForm] = useState<Partial<Pengumuman>>();
@@ -33,6 +35,7 @@ export default function PengumumanPage() {
   const { data, isLoading, refetch } = useGetPengumumanListQuery({
     page: currentPage,
     paginate: itemsPerPage,
+    search: query,
   });
 
   const list = useMemo(() => data?.data || [], [data]);
@@ -129,20 +132,28 @@ export default function PengumumanPage() {
 
   return (
     <div className="p-6 space-y-6">
-      <ProdukToolbar
-        openModal={openModal}
-        onSearchChange={(q: string) => setQuery(q)}
-        enableStatusFilter
-        statusOptions={[
-          { value: "all", label: "Semua Status" },
-          { value: "1", label: "Published" },
-          { value: "0", label: "Draft" },
-        ]}
-        initialStatus={category}
-        onStatusChange={(s: string) =>
-          setCategory(s === "1" || s === "0" ? s : "all")
-        }
-      />
+      <div className="rounded-md bg-white p-4 border border-gray-100 shadow-sm">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          {/* Kiri: filter */}
+          <div className="w-full flex flex-col gap-3 sm:flex-row sm:items-center">
+            <Input
+              placeholder="Cari Pengumuman..."
+              value={query}
+              onChange={(e) => {
+                const q = e.target.value;
+                setQuery(q);
+              }}
+              className="w-full sm:max-w-xs"
+            />
+          </div>
+
+          {/* Kanan: aksi */}
+          <div className="shrink-0 flex flex-wrap items-center gap-2">
+            {/* Tambah data (opsional) */}
+            {openModal && <Button onClick={openModal}><Plus /> Tambah Pengumuman</Button>}
+          </div>
+        </div>
+      </div>
 
       <Card>
         <CardContent className="p-0 overflow-x-auto">

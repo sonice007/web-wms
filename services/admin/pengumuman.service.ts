@@ -12,14 +12,15 @@ export const alumniApi = apiSlice.injectEndpoints({
         total: number;
         per_page: number;
       },
-      { page: number; paginate: number }
+      { page: number; paginate: number; search?: string }
     >({
-      query: ({ page, paginate }) => ({
+      query: ({ page, paginate, search }) => ({
         url: `/announcement`,
         method: "GET",
         params: {
           page,
           paginate,
+          search,
         },
       }),
       transformResponse: (response: {
