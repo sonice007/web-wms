@@ -266,10 +266,12 @@ export default function AnggotaPage() {
             <thead className="bg-muted text-left">
               <tr>
                 <th className="px-4 py-2">Aksi</th>
+                <th className="px-4 py-2">No. Anggota</th>
                 <th className="px-4 py-2">Nama</th>
                 <th className="px-4 py-2">Email</th>
                 <th className="px-4 py-2">Telepon</th>
-                <th className="px-4 py-2">Gender</th>
+                <th className="px-4 py-2">Provinsi</th>
+                <th className="px-4 py-2">Kota</th>
                 <th className="px-4 py-2">Status</th>
               </tr>
             </thead>
@@ -302,28 +304,9 @@ export default function AnggotaPage() {
                           )
                         }
                         handleDelete={() => handleDelete(item)}
-                        additionalActions={
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() =>
-                                  router.push(
-                                    `/admin/history?anggota_id=${item.id}`
-                                  )
-                                }
-                              >
-                                <HistoryIcon className="size-4" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>History Anggota</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        }
                       />
                     </td>
+                    <td className="px-4 py-2 whitespace-nowrap">{item.reference}</td>
                     <td className="px-4 py-2 whitespace-nowrap">{item.name}</td>
                     <td className="px-4 py-2 whitespace-nowrap">
                       {item.email}
@@ -332,7 +315,10 @@ export default function AnggotaPage() {
                       {item.phone}
                     </td>
                     <td className="px-4 py-2 whitespace-nowrap">
-                      {item.gender}
+                      {item.province_name}
+                    </td>
+                    <td className="px-4 py-2 whitespace-nowrap">
+                      {item.regency_name}
                     </td>
                     <td className="px-4 py-2 whitespace-nowrap">
                       {statusBadge(item.status)}

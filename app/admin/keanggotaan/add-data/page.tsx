@@ -9,7 +9,7 @@ import {
   useUpdateAnggotaMutation,
 } from "@/services/admin/anggota.service";
 import type {
-  Anggota,
+  Anggota, // Assuming Anggota type now includes all the new fields
 } from "@/types/admin/anggota";
 import AnggotaForm from "@/components/form-modal/admin/anggota-form";
 
@@ -46,7 +46,23 @@ function AnggotaAddEditPageInner() {
       Anggota & { password?: string; password_confirmation?: string }
     >
   >({});
-
+  
+  // ====================================================================
+  // FIX: Mengisi form saat detailData tersedia
+  // ====================================================================
+  useEffect(() => {
+    if ((isEdit || isDetail) && detailData) {
+      setForm({
+        ...detailData,
+        // Pastikan field password direset saat mengisi dari data API
+        password: '', 
+        password_confirmation: ''
+      });
+    } 
+    // Tidak perlu menambahkan logic else if (isAdd) untuk reset karena 
+    // state form sudah ter-reset pada mounting awal (walaupun dapat dipertimbangkan)
+  }, [detailData, isEdit, isDetail]);
+  // ====================================================================
 
   const readonly = isDetail;
   const isLoading = isCreating || isUpdating || isFetching;
@@ -83,8 +99,10 @@ function AnggotaAddEditPageInner() {
       if (form.regency_id) fd.append("regency_id", form.regency_id);
       if (form.district_id) fd.append("district_id", form.district_id);
       if (form.village_id) fd.append("village_id", form.village_id);
-      if (form.rt !== undefined) fd.append("rt", String(form.rt));
-      if (form.rw !== undefined) fd.append("rw", String(form.rw));
+      // Pengecekan agar nilai 0 (nol) tetap dikirim
+      if (form.rt !== undefined && form.rt !== null) fd.append("rt", String(form.rt));
+      if (form.rw !== undefined && form.rw !== null) fd.append("rw", String(form.rw));
+      
       if (form.religion) fd.append("religion", form.religion);
       if (form.marital_status) fd.append("marital_status", form.marital_status);
       if (form.occupation) fd.append("occupation", form.occupation);
@@ -103,6 +121,11 @@ function AnggotaAddEditPageInner() {
       if (isAdd && form.password && form.password_confirmation) {
         fd.append("password", form.password);
         fd.append("password_confirmation", form.password_confirmation);
+      }
+      
+      // Tambahkan method field untuk PUT/PATCH request
+      if (isEdit) {
+          fd.append("_method", "PUT");
       }
 
       if (isEdit && id) {
@@ -123,14 +146,19 @@ function AnggotaAddEditPageInner() {
 
   return (
     <div className="p-4">
-      <AnggotaForm
-        form={form}
-        setForm={setForm}
-        onCancel={() => router.back()}
-        onSubmit={handleSubmit}
-        readonly={readonly}
-        isLoading={isLoading}
-      />
+      {/* Menampilkan pesan loading saat data sedang diambil */}
+      {isFetching && (isEdit || isDetail) ? (
+        <div className="text-center p-10">Memuat data anggota...</div>
+      ) : (
+        <AnggotaForm
+          form={form}
+          setForm={setForm}
+          onCancel={() => router.back()}
+          onSubmit={handleSubmit}
+          readonly={readonly}
+          isLoading={isLoading}
+        />
+      )}
     </div>
   );
 }

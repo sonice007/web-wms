@@ -1,5 +1,6 @@
 export interface Anggota {
   id: number;
+  reference?: string;
   name: string;
   email: string;
   gender: string;
@@ -12,9 +13,13 @@ export interface Anggota {
   status: number;
   // New fields from the desired JSON structure:
   province_id?: string;
+  province_name?: string;
   regency_id?: string;
+  regency_name?: string;
   district_id?: string;
+  district_name?: string;
   village_id?: string;
+  village_name?: string;
   rt?: number;
   rw?: number;
   ktp?: string;
