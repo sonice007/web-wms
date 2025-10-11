@@ -154,7 +154,9 @@ export default function ServicesPage() {
           {/* Title */}
           <h1 className="text-4xl lg:text-6xl font-bold mb-6">
             Wujudkan Kebutuhan Anda
-            <span className="block text-[#E53935]">Dengan Layanan Koperasi</span>
+            <span className="block text-[#E53935]">
+              Dengan Layanan Koperasi
+            </span>
           </h1>
 
           {/* Subtitle */}
@@ -307,11 +309,11 @@ export default function ServicesPage() {
       )}
 
       {/* Reservation Modal */}
-      <ReservationModal
+      {/* <ReservationModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         service={selectedService}
-      />
+      /> */}
     </section>
   );
 }
