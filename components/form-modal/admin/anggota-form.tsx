@@ -308,7 +308,7 @@ export default function AnggotaForm({
 
           {/* Password (hanya add) */}
           {!readonly && !form.id && (
-            <div className="sm:col-span-2 grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-4">
               <div className="flex flex-col gap-y-1">
                 <Label>Password (wajib saat tambah)</Label>
                 <Input
@@ -353,17 +353,45 @@ export default function AnggotaForm({
           </div>
 
           {/* KTP */}
-          <div className="flex flex-col gap-y-1">
-            <Label>Nomor KTP</Label>
-            <Input
-              value={form.ktp ?? ""}
-              onChange={(e) => setForm({ ...form, ktp: e.target.value })}
-              readOnly={readonly}
-            />
-          </div>
+						<div className="flex flex-col gap-y-1">
+						<Label htmlFor="ktp">Nomor KTP</Label>
+						<Input
+							id="ktp"
+							name="ktp"
+							placeholder="Masukkan 16 digit nomor KTP"
+							value={form.ktp ?? ""}
+							onChange={(e) => {
+							const digitsOnly = e.target.value.replace(/\D/g, "").slice(0, 16);
+							setForm({ ...form, ktp: digitsOnly });
+							}}
+							inputMode="numeric"
+							maxLength={16}
+							pattern="^\d{16}$"
+							title="Nomor KTP harus 16 digit angka"
+							readOnly={readonly}
+							autoComplete="off"
+							className={
+							(form.ktp ?? "").length > 0 && !/^\d{16}$/.test(form.ktp ?? "")
+								? "border-red-500 focus-visible:ring-red-500"
+								: undefined
+							}
+							aria-invalid={
+							(form.ktp ?? "").length > 0 && !/^\d{16}$/.test(form.ktp ?? "")
+								? "true"
+								: "false"
+							}
+						/>
+						{!readonly &&
+							(form.ktp ?? "").length > 0 &&
+							!/^\d{16}$/.test(form.ktp ?? "") && (
+							<span className="text-xs text-red-600">
+								Nomor KTP harus terdiri dari 16 digit angka.
+							</span>
+							)}
+						</div>
 
           {/* Tempat/Tanggal Lahir */}
-          <div className="sm:col-span-2 grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-y-1">
               <Label>Tempat Lahir</Label>
               <Input
@@ -388,48 +416,95 @@ export default function AnggotaForm({
           </div>
 
           {/* Agama */}
-          <div className="flex flex-col gap-y-1">
-            <Label>Agama</Label>
-            <Input
-              value={form.religion ?? ""}
-              onChange={(e) => setForm({ ...form, religion: e.target.value })}
-              readOnly={readonly}
-            />
-          </div>
+					<div className="flex flex-col gap-y-1">
+						<Label>Agama</Label>
+						<select
+							className="border rounded-md px-3 py-2 text-sm bg-white dark:bg-zinc-800 border-gray-300 dark:border-zinc-600"
+							value={form.religion ?? ""}
+							onChange={(e) => setForm({ ...form, religion: e.target.value })}
+							disabled={readonly}
+						>
+							<option value="">Pilih Agama</option>
+							<option value="Islam">Islam</option>
+							<option value="Kristen Protestan">Kristen Protestan</option>
+							<option value="Katolik">Katolik</option>
+							<option value="Hindu">Hindu</option>
+							<option value="Buddha">Buddha</option>
+							<option value="Konghucu">Konghucu</option>
+						</select>
+					</div>
 
           {/* Status Pernikahan */}
-          <div className="flex flex-col gap-y-1">
-            <Label>Status Pernikahan</Label>
-            <Input
-              value={form.marital_status ?? ""}
-              onChange={(e) =>
-                setForm({ ...form, marital_status: e.target.value })
-              }
-              readOnly={readonly}
-            />
-          </div>
+						<div className="flex flex-col gap-y-1">
+						<Label>Status Pernikahan</Label>
+						<select
+							className="border rounded-md px-3 py-2 text-sm bg-white dark:bg-zinc-800 border-gray-300 dark:border-zinc-600"
+							value={form.marital_status ?? ""}
+							onChange={(e) =>
+							setForm({ ...form, marital_status: e.target.value })
+							}
+							disabled={readonly}
+						>
+							<option value="">Pilih Status Pernikahan</option>
+							<option value="Belum Menikah">Belum Menikah</option>
+							<option value="Menikah">Menikah</option>
+							<option value="Cerai Hidup">Cerai Hidup</option>
+							<option value="Cerai Mati">Cerai Mati</option>
+						</select>
+					</div>
 
           {/* Pekerjaan */}
           <div className="flex flex-col gap-y-1">
             <Label>Pekerjaan</Label>
-            <Input
+            <select
+              className="border rounded-md px-3 py-2 text-sm bg-white dark:bg-zinc-800 border-gray-300 dark:border-zinc-600"
               value={form.occupation ?? ""}
-              onChange={(e) => setForm({ ...form, occupation: e.target.value })}
-              readOnly={readonly}
-            />
+              onChange={(e) =>
+                setForm({ ...form, occupation: e.target.value })
+              }
+              disabled={readonly}
+            >
+              <option value="">Pilih Pekerjaan</option>
+              <option value="PELAJAR/MAHASISWA">PELAJAR/MAHASISWA</option>
+              <option value="WIRASWASTA">WIRASWASTA</option>
+              <option value="KARYAWAN SWASTA">KARYAWAN SWASTA</option>
+              <option value="PEGAWAI NEGERI SIPIL">PEGAWAI NEGERI SIPIL</option>
+              <option value="TNI">TNI</option>
+              <option value="POLRI">POLRI</option>
+              <option value="MENGURUS RUMAH TANGGA">MENGURUS RUMAH TANGGA</option>
+              <option value="BELUM/TIDAK BEKERJA">BELUM/TIDAK BEKERJA</option>
+              <option value="PETANI/PEKEBUN">PETANI/PEKEBUN</option>
+              <option value="PEDAGANG">PEDAGANG</option>
+              <option value="PENSIUNAN">PENSIUNAN</option>
+              <option value="LAINNYA">LAINNYA</option>
+              {/* Anda dapat menambahkan lebih banyak opsi sesuai kebutuhan */}
+            </select>
           </div>
 
-          {/* Pendidikan Terakhir */}
-          <div className="flex flex-col gap-y-1">
-            <Label>Pendidikan Terakhir</Label>
-            <Input
-              value={form.last_education ?? ""}
-              onChange={(e) =>
-                setForm({ ...form, last_education: e.target.value })
-              }
-              readOnly={readonly}
-            />
-          </div>
+						{/* Pendidikan Terakhir */}
+						<div className="flex flex-col gap-y-1">
+						<Label>Pendidikan Terakhir</Label>
+						<select
+							className="border rounded-md px-3 py-2 text-sm bg-white dark:bg-zinc-800 border-gray-300 dark:border-zinc-600"
+							value={form.last_education ?? ""}
+							onChange={(e) =>
+							setForm({ ...form, last_education: e.target.value })
+							}
+							disabled={readonly}
+						>
+							<option value="">Pilih Pendidikan Terakhir</option>
+							<option value="SD">SD</option>
+							<option value="SMP">SMP</option>
+							<option value="SMA/SMK">SMA/SMK</option>
+							<option value="D1">D1</option>
+							<option value="D2">D2</option>
+							<option value="D3">D3</option>
+							<option value="D4">D4</option>
+							<option value="S1">S1</option>
+							<option value="S2">S2</option>
+							<option value="S3">S3</option>
+						</select>
+						</div>
 
           {/* ========================================================== */}
           {/* ADDRESS INFO */}
@@ -782,15 +857,7 @@ export default function AnggotaForm({
               readOnly={readonly}
             />
           </div>
-
-          {/* ========================================================== */}
-          {/* MISC INFO */}
-          {/* ========================================================== */}
-          <h3 className="sm:col-span-2 text-md font-semibold mt-4 border-b pb-2">
-            Informasi Lainnya
-          </h3>
-
-          {/* Status Anggota */}
+					{/* Status Anggota */}
           <div className="flex flex-col gap-y-1">
             <Label>Status Anggota</Label>
             <select
@@ -815,16 +882,6 @@ export default function AnggotaForm({
                 </option>
               ))}
             </select>
-          </div>
-
-          {/* KTP Path (File Path) */}
-          <div className="flex flex-col gap-y-1">
-            <Label>Path File KTP (Optional - Jika diupload terpisah)</Label>
-            <Input
-              value={form.path ?? ""}
-              onChange={(e) => setForm({ ...form, path: e.target.value })}
-              readOnly={readonly}
-            />
           </div>
         </div>
       </div>
