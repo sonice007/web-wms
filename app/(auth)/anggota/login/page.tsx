@@ -2,6 +2,7 @@
 
 import type React from "react";
 
+import { signIn } from "next-auth/react";
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -22,16 +23,29 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
+    try {
+      setIsLoading(true);
+      const signInRes = await signIn("credentials", {
+        redirect: false,
+        email,
+        password,
+      });
 
-    // Simulate login
-    setTimeout(() => {
+      if (signInRes?.ok) {
+        router.replace("/");
+      } else {
+        setError("Gagal masuk. Email atau password salah.");
+      }
+    } catch (err: unknown) {
+      console.error("Login error:", err);
+      setError("Login gagal. Cek kembali email dan password.");
+    } finally {
       setIsLoading(false);
-      router.push("/");
-    }, 1000);
+    }
   };
 
   return (
@@ -91,6 +105,10 @@ export default function LoginPage() {
                 />
               </div>
             </div>
+
+            {error && (
+              <p className="text-sm text-red-600 text-center">{error}</p>
+            )}
 
             <div className="flex justify-end">
               <Link

@@ -123,6 +123,7 @@
       height: 53.98mm !important;
     }
     body {
+      print-color-adjust: exact;
       -webkit-print-color-adjust: exact;
     }
     .no-print {

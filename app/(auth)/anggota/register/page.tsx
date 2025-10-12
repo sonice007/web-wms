@@ -2,7 +2,12 @@
 
 import type React from "react";
 
-import { useState, useEffect } from "react";
+import useDebounce from "@/hooks/use-debounce";
+import { useGetProvinsiListQuery } from "@/services/admin/master/provinsi.service";
+import { useGetKotaListQuery } from "@/services/admin/master/kota.service";
+import { useGetKecamatanListQuery } from "@/services/admin/master/kecamatan.service";
+import { useGetKelurahanListQuery } from "@/services/admin/master/kelurahan.service";
+import { useState, useEffect, useRef, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -24,31 +29,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { UserPlus } from "lucide-react";
-
-const provinces = [
-  { id: "1", name: "DKI Jakarta" },
-  { id: "2", name: "Jawa Barat" },
-  { id: "3", name: "Jawa Tengah" },
-  { id: "4", name: "Jawa Timur" },
-  { id: "5", name: "Banten" },
-];
-
-const cities: Record<string, { id: string; name: string }[]> = {
-  "1": [
-    { id: "1-1", name: "Jakarta Pusat" },
-    { id: "1-2", name: "Jakarta Utara" },
-    { id: "1-3", name: "Jakarta Selatan" },
-    { id: "1-4", name: "Jakarta Timur" },
-    { id: "1-5", name: "Jakarta Barat" },
-  ],
-  "2": [
-    { id: "2-1", name: "Bandung" },
-    { id: "2-2", name: "Bekasi" },
-    { id: "2-3", name: "Bogor" },
-    { id: "2-4", name: "Depok" },
-  ],
-};
+import { UserPlus, Loader2 } from "lucide-react";
 
 const districts: Record<string, { id: string; name: string }[]> = {
   "1-1": [
@@ -96,6 +77,11 @@ export default function RegisterPage() {
   // const taskId = searchParams.get("taskId") || "";
   const referal = searchParams.get("referal") || "";
 
+  const dropdownProvinsiRef = useRef<HTMLDivElement>(null);
+  const dropdownKotaRef = useRef<HTMLDivElement>(null);
+  const dropdownKecamatanRef = useRef<HTMLDivElement>(null);
+  const dropdownKelurahanRef = useRef<HTMLDivElement>(null);
+
   const [formData, setFormData] = useState({
     // Group 1: Akun
     fullName: "",
@@ -134,6 +120,93 @@ export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [ktpPreview, setKtpPreview] = useState<string | null>(null);
 
+  const [openSelect, setOpenSelect] = useState({
+    province: false,
+    city: false,
+    district: false,
+    subDistrict: false,
+  });
+
+  // provinsi
+  const [provinsiSearch, setProvinsiSearch] = useState("");
+  const debouncedProvinsiSearch = useDebounce(provinsiSearch, 500);
+  const { data: provinsiData, isLoading: isProvinsiLoading } =
+    useGetProvinsiListQuery(
+      {
+        page: 1,
+        paginate: 100,
+        search: debouncedProvinsiSearch,
+      },
+      { skip: debouncedProvinsiSearch.length < 2 }
+    );
+  const filteredProvince = provinsiData?.data || [];
+
+  // kota
+  const [kotaSearch, setKotaSearch] = useState("");
+  const debouncedKotaSearch = useDebounce(kotaSearch, 500);
+  const { data: kotaData, isLoading: isKotaLoading } = useGetKotaListQuery(
+    {
+      page: 1,
+      paginate: 100,
+      search: debouncedProvinsiSearch,
+      province_id: formData.province,
+    },
+    { skip: !formData.province || debouncedKotaSearch.length < 2 }
+  );
+  const filteredKota = useMemo(() => {
+    if (!kotaData?.data) return [];
+
+    return kotaData.data.filter((kota) => {
+      return kota.name
+        .toLowerCase()
+        .includes(debouncedKotaSearch.toLowerCase());
+    });
+  }, [kotaData, debouncedKotaSearch]);
+
+  // kecamatan
+  const [districtSearch, setDistrictSearch] = useState("");
+  const debouncedDistrictSearch = useDebounce(districtSearch, 500);
+  const { data: kecamatanData, isLoading: isKecamatanLoading } =
+    useGetKecamatanListQuery(
+      {
+        page: 1,
+        paginate: 100,
+        search: debouncedDistrictSearch,
+        regency_id: formData.city,
+      },
+      { skip: !formData.city || debouncedDistrictSearch.length < 2 }
+    );
+  const filteredDistrict = useMemo(() => {
+    if (!kecamatanData?.data) return [];
+    return kecamatanData.data.filter((district) => {
+      return district.name
+        .toLocaleLowerCase()
+        .includes(debouncedDistrictSearch.toLowerCase());
+    });
+  }, [kecamatanData, debouncedDistrictSearch]);
+
+  // kelurahan
+  const [subDistrictSearch, setSubDistrictSearch] = useState("");
+  const debouncedSubDistrictSearch = useDebounce(subDistrictSearch, 500);
+  const { data: kelurahanData, isLoading: isKelurahanLoading } =
+    useGetKelurahanListQuery(
+      {
+        page: 1,
+        paginate: 100,
+        search: debouncedSubDistrictSearch,
+        district_id: formData.district,
+      },
+      { skip: !formData.city || debouncedSubDistrictSearch.length < 2 }
+    );
+  const filteredSubDistrict = useMemo(() => {
+    if (!kelurahanData?.data) return [];
+    return kelurahanData.data.filter((district) => {
+      return district.name
+        .toLocaleLowerCase()
+        .includes(debouncedSubDistrictSearch.toLowerCase());
+    });
+  }, [kelurahanData, debouncedSubDistrictSearch]);
+
   const handleKtpUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -163,11 +236,79 @@ export default function RegisterPage() {
     }, 1500);
   };
 
+  const handleProvinsiSelect = (provinsi: { id: string; name: string }) => {
+    console.log("dijalankan");
+    setFormData((prev) => ({ ...prev, province: provinsi.id }));
+    setProvinsiSearch(provinsi.name);
+    setOpenSelect({ ...openSelect, province: false });
+  };
+
+  const handleKotaSelect = (kota: { id: string; name: string }) => {
+    setFormData((prev) => ({ ...prev, city: kota.id }));
+    setKotaSearch(kota.name);
+    setOpenSelect({ ...openSelect, city: false });
+  };
+
+  const handleKecamatanSelect = (kecamatan: { id: string; name: string }) => {
+    setFormData((prev) => ({ ...prev, district: kecamatan.id }));
+    setDistrictSearch(kecamatan.name);
+    setOpenSelect({ ...openSelect, district: false });
+  };
+
+  const handleKelurahanSelect = (kelurahan: { id: string; name: string }) => {
+    setFormData((prev) => ({ ...prev, subDistrict: kelurahan.id }));
+    setSubDistrictSearch(kelurahan.name);
+    setOpenSelect({ ...openSelect, subDistrict: false });
+  };
+
   useEffect(() => {
     if (referal) {
       setFormData((prev) => ({ ...prev, referalCode: referal }));
     }
   }, [referal]);
+
+  // Menutup dropdown saat klik di luar komponen
+  // useEffect(() => {
+  //   function handleClickOutside(event: MouseEvent) {
+  //     if (
+  //       dropdownProvinsiRef.current &&
+  //       !dropdownProvinsiRef.current.contains(event.target as Node)
+  //     ) {
+  //       setOpenSelect({ ...openSelect, province: false });
+  //     }
+  //   }
+  //   document.addEventListener("mousedown", handleClickOutside);
+  //   return () => document.removeEventListener("mousedown", handleClickOutside);
+  //   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, [dropdownProvinsiRef]);
+
+  // useEffect(() => {
+  //   function handleClickOutside(event: MouseEvent) {
+  //     if (
+  //       dropdownKotaRef.current &&
+  //       !dropdownKotaRef.current.contains(event.target as Node)
+  //     ) {
+  //       setOpenSelect({ ...openSelect, city: false });
+  //     }
+  //   }
+  //   document.addEventListener("mousedown", handleClickOutside);
+  //   return () => document.removeEventListener("mousedown", handleClickOutside);
+  //   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, [dropdownKotaRef]);
+
+  // useEffect(() => {
+  //   function handleClickOutside(event: MouseEvent) {
+  //     if (
+  //       dropdownKecamatanRef.current &&
+  //       !dropdownKecamatanRef.current.contains(event.target as Node)
+  //     ) {
+  //       setOpenSelect({ ...openSelect, district: false });
+  //     }
+  //   }
+  //   document.addEventListener("mousedown", handleClickOutside);
+  //   return () => document.removeEventListener("mousedown", handleClickOutside);
+  //   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, [dropdownKecamatanRef]);
 
   return (
     <div className="relative">
@@ -216,7 +357,6 @@ export default function RegisterPage() {
                   className="h-11"
                 />
               </div>
-
               <div className="space-y-2">
                 <Label htmlFor="email">
                   Email <span className="text-destructive">*</span>
@@ -233,7 +373,6 @@ export default function RegisterPage() {
                   className="h-11"
                 />
               </div>
-
               <div className="space-y-2">
                 <Label htmlFor="password">
                   Kata Sandi <span className="text-destructive">*</span>
@@ -251,7 +390,6 @@ export default function RegisterPage() {
                   className="h-11"
                 />
               </div>
-
               <div className="space-y-2">
                 <Label htmlFor="confirmPassword">
                   Konfirmasi Kata Sandi{" "}
@@ -273,7 +411,6 @@ export default function RegisterPage() {
                   className="h-11"
                 />
               </div>
-
               <div className="space-y-2">
                 <Label htmlFor="referalCode">Kode Referal (Opsional)</Label>
                 <Input
@@ -468,121 +605,210 @@ export default function RegisterPage() {
                 </Select>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="province">
-                  Provinsi <span className="text-destructive">*</span>
-                </Label>
-                <Select
-                  value={formData.province}
-                  onValueChange={(value) =>
-                    setFormData({
-                      ...formData,
-                      province: value,
-                      city: "",
-                      district: "",
-                      subDistrict: "",
-                    })
-                  }
-                  required
-                >
-                  <SelectTrigger className="h-11 w-full">
-                    <SelectValue placeholder="Pilih provinsi" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {provinces.map((province) => (
-                      <SelectItem key={province.id} value={province.id}>
-                        {province.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <div className="space-y-2" ref={dropdownProvinsiRef}>
+                <Label htmlFor="province_id">Provinsi</Label>
+                <div className="relative">
+                  <Input
+                    id="province_id"
+                    placeholder="Ketik min 2 huruf untuk mencari provinsi..."
+                    value={provinsiSearch}
+                    onChange={(e) => {
+                      setProvinsiSearch(e.target.value);
+                      setOpenSelect({ ...openSelect, province: true });
+                      if (formData.province) {
+                        setFormData((prev) => ({ ...prev, province: "" }));
+                      }
+                    }}
+                    onFocus={() => {
+                      setOpenSelect({ ...openSelect, province: true });
+                    }}
+                    required
+                    autoComplete="off"
+                  />
+                  {openSelect.province && (
+                    <div className="absolute z-10 w-full mt-1 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                      {isProvinsiLoading ? (
+                        <div className="flex items-center justify-center p-4">
+                          <Loader2 className="h-5 w-5 animate-spin" />
+                        </div>
+                      ) : provinsiSearch.length < 2 ? (
+                        <p className="text-sm text-gray-500 p-3">
+                          Ketik minimal 2 huruf...
+                        </p>
+                      ) : filteredProvince.length > 0 ? (
+                        provinsiData?.data.map((provinsi) => (
+                          <button
+                            type="button"
+                            key={provinsi.id}
+                            onClick={() => {
+                              handleProvinsiSelect(provinsi);
+                            }}
+                            className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-zinc-700"
+                          >
+                            {provinsi.name}
+                          </button>
+                        ))
+                      ) : (
+                        <p className="text-sm text-gray-500 p-3">
+                          Provinsi tidak ditemukan.
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="city">
-                  Kabupaten/Kota <span className="text-destructive">*</span>
-                </Label>
-                <Select
-                  value={formData.city}
-                  onValueChange={(value) =>
-                    setFormData({
-                      ...formData,
-                      city: value,
-                      district: "",
-                      subDistrict: "",
-                    })
-                  }
-                  disabled={!formData.province}
-                  required
-                >
-                  <SelectTrigger className="h-11 w-full">
-                    <SelectValue placeholder="Pilih kabupaten/kota" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {formData.province &&
-                      cities[formData.province]?.map((city) => (
-                        <SelectItem key={city.id} value={city.id}>
-                          {city.name}
-                        </SelectItem>
-                      ))}
-                  </SelectContent>
-                </Select>
+              <div className="space-y-2" ref={dropdownKotaRef}>
+                <Label htmlFor="city">Kabupaten/Kota</Label>
+                <div className="relative">
+                  <Input
+                    id="city"
+                    placeholder="Ketik min 2 huruf untuk mencari kabupaten/kota..."
+                    value={kotaSearch}
+                    onChange={(e) => {
+                      setKotaSearch(e.target.value);
+                      setOpenSelect({ ...openSelect, city: true });
+                      if (formData.city) {
+                        setFormData((prev) => ({ ...prev, city: "" }));
+                      }
+                    }}
+                    onFocus={() => {
+                      setOpenSelect({ ...openSelect, city: true });
+                    }}
+                    required
+                    autoComplete="off"
+                  />
+                  {openSelect.city && (
+                    <div className="absolute z-10 w-full mt-1 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                      {isKotaLoading ? (
+                        <div className="flex items-center justify-center p-4">
+                          <Loader2 className="h-5 w-5 animate-spin" />
+                        </div>
+                      ) : kotaSearch.length < 2 ? (
+                        <p className="text-sm text-gray-500 p-3">
+                          Ketik minimal 2 huruf...
+                        </p>
+                      ) : filteredKota.length > 0 ? (
+                        filteredKota.map((kota) => (
+                          <button
+                            type="button"
+                            key={kota.id}
+                            onClick={() => handleKotaSelect(kota)}
+                            className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-zinc-700"
+                          >
+                            {kota.name}
+                          </button>
+                        ))
+                      ) : (
+                        <p className="text-sm text-gray-500 p-3">
+                          Kota tidak ditemukan.
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="district">
-                  Kecamatan <span className="text-destructive">*</span>
-                </Label>
-                <Select
-                  value={formData.district}
-                  onValueChange={(value) =>
-                    setFormData({
-                      ...formData,
-                      district: value,
-                      subDistrict: "",
-                    })
-                  }
-                  disabled={!formData.city}
-                  required
-                >
-                  <SelectTrigger className="h-11 w-full">
-                    <SelectValue placeholder="Pilih kecamatan" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {formData.city &&
-                      districts[formData.city]?.map((district) => (
-                        <SelectItem key={district.id} value={district.id}>
-                          {district.name}
-                        </SelectItem>
-                      ))}
-                  </SelectContent>
-                </Select>
+              <div className="space-y-2" ref={dropdownKecamatanRef}>
+                <Label htmlFor="district">Kecamatan</Label>
+                <div className="relative">
+                  <Input
+                    id="district"
+                    placeholder="Ketik min 2 huruf untuk mencari kecamatan..."
+                    value={districtSearch}
+                    onChange={(e) => {
+                      setDistrictSearch(e.target.value);
+                      setOpenSelect({ ...openSelect, district: true });
+                      if (formData.city) {
+                        setFormData((prev) => ({ ...prev, district: "" }));
+                      }
+                    }}
+                    onFocus={() => {
+                      setOpenSelect({ ...openSelect, district: true });
+                    }}
+                    required
+                    autoComplete="off"
+                  />
+                  {openSelect.district && (
+                    <div className="absolute z-10 w-full mt-1 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                      {isKecamatanLoading ? (
+                        <div className="flex items-center justify-center p-4">
+                          <Loader2 className="h-5 w-5 animate-spin" />
+                        </div>
+                      ) : districtSearch.length < 2 ? (
+                        <p className="text-sm text-gray-500 p-3">
+                          Ketik minimal 2 huruf...
+                        </p>
+                      ) : filteredDistrict.length > 0 ? (
+                        filteredDistrict.map((kecamatan) => (
+                          <button
+                            type="button"
+                            key={kecamatan.id}
+                            onClick={() => handleKecamatanSelect(kecamatan)}
+                            className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-zinc-700"
+                          >
+                            {kecamatan.name}
+                          </button>
+                        ))
+                      ) : (
+                        <p className="text-sm text-gray-500 p-3">
+                          kecamatan tidak ditemukan.
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="subDistrict">
-                  Kelurahan <span className="text-destructive">*</span>
-                </Label>
-                <Select
-                  value={formData.subDistrict}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, subDistrict: value })
-                  }
-                  disabled={!formData.district}
-                  required
-                >
-                  <SelectTrigger className="h-11 w-full">
-                    <SelectValue placeholder="Pilih kelurahan" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {formData.district &&
-                      subDistricts[formData.district]?.map((subDistrict) => (
-                        <SelectItem key={subDistrict.id} value={subDistrict.id}>
-                          {subDistrict.name}
-                        </SelectItem>
-                      ))}
-                  </SelectContent>
-                </Select>
+              <div className="space-y-2" ref={dropdownKelurahanRef}>
+                <Label htmlFor="subDistrict">Kelurahan</Label>
+                <div className="relative">
+                  <Input
+                    id="subDistrict"
+                    placeholder="Ketik min 2 huruf untuk mencari kelurahan..."
+                    value={subDistrictSearch}
+                    onChange={(e) => {
+                      setSubDistrictSearch(e.target.value);
+                      setOpenSelect({ ...openSelect, subDistrict: true });
+                      if (formData.city) {
+                        setFormData((prev) => ({ ...prev, subDistrict: "" }));
+                      }
+                    }}
+                    onFocus={() => {
+                      setOpenSelect({ ...openSelect, subDistrict: true });
+                    }}
+                    required
+                    autoComplete="off"
+                  />
+                  {openSelect.subDistrict && (
+                    <div className="absolute z-10 w-full mt-1 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                      {isKelurahanLoading ? (
+                        <div className="flex items-center justify-center p-4">
+                          <Loader2 className="h-5 w-5 animate-spin" />
+                        </div>
+                      ) : subDistrictSearch.length < 2 ? (
+                        <p className="text-sm text-gray-500 p-3">
+                          Ketik minimal 2 huruf...
+                        </p>
+                      ) : filteredSubDistrict.length > 0 ? (
+                        filteredSubDistrict.map((kelurahan) => (
+                          <button
+                            type="button"
+                            key={kelurahan.id}
+                            onClick={() => handleKelurahanSelect(kelurahan)}
+                            className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-zinc-700"
+                          >
+                            {kelurahan.name}
+                          </button>
+                        ))
+                      ) : (
+                        <p className="text-sm text-gray-500 p-3">
+                          Kelurahan tidak ditemukan.
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">

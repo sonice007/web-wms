@@ -1,3 +1,7 @@
+"use client";
+
+import { signOut } from "next-auth/react";
+import { useLogoutMutation } from "@/services/auth.service";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -15,8 +19,18 @@ import {
 import Link from "next/link";
 
 export default function ProfilePage() {
+  const [logoutApi, { isLoading: isLoggingOut }] = useLogoutMutation();
+
+  const handleLogout = async () => {
+    try {
+      await logoutApi().unwrap();
+    } finally {
+      await signOut({ callbackUrl: "/anggota/login", redirect: true });
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-screen bg-background">
       {/* Header with Profile Info */}
       <div
         className="p-6 text-white"
@@ -192,6 +206,8 @@ export default function ProfilePage() {
 
         {/* Logout Button */}
         <Button
+          disabled={isLoggingOut}
+          onClick={handleLogout}
           variant="outline"
           className="w-full justify-start gap-3 h-auto p-4 border-destructive/20 text-destructive hover:bg-destructive/10 hover:text-destructive bg-transparent"
         >
