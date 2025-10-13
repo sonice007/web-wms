@@ -20,6 +20,9 @@ import {
 import {
   useGetKelurahanListQuery,
 } from "@/services/admin/master/kelurahan.service";
+import { KTACard } from "@/components/kta-card-admin";
+import KTACardBack from "@/components/kta-card-back-admin";
+
 
 interface AnggotaFormProps {
   form: Partial<Anggota>;
@@ -278,6 +281,12 @@ export default function AnggotaForm({
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {readonly && (
+              <>
+              <KTACard />
+              <KTACardBack memberId={'1'} />
+              </>
+          )}
           {/* ========================================================== */}
           {/* BASIC INFO */}
           {/* ========================================================== */}
