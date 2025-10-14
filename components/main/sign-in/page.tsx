@@ -665,7 +665,7 @@ export default function LoginPage() {
             <div className="flex items-center gap-3 mb-8">
               <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center">
                 <Image
-                  src="/logo-koperasi-merah-putih-online.webp"
+                  src="/logo.webp"
                   alt="Digital KTA"
                   width={50}
                   height={50}

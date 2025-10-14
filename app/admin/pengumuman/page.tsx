@@ -16,7 +16,6 @@ import {
 } from "@/services/admin/pengumuman.service";
 import { Pengumuman } from "@/types/admin/pengumuman";
 import FormPengumuman from "@/components/form-modal/admin/pengumuman-form";
-import { ProdukToolbar } from "@/components/ui/produk-toolbar";
 import ActionsGroup from "@/components/admin-components/actions-group";
 import { Plus } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -57,9 +56,10 @@ export default function PengumumanPage() {
       if (!form) return;
 
       const payload = new FormData();
+      
       if (form.title) payload.append("title", form.title);
       if (form.content) payload.append("content", form.content);
-      if (form.status) payload.append("status", form.status.toString());
+      if (form.status) payload.append("status", form.status ? "1" : "0");
       if (form.date) payload.append("date", form.date);
       if (form.image instanceof File) payload.append("image", form.image);
 

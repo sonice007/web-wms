@@ -58,39 +58,39 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, title }) => {
       icon: <Building2 className="h-5 w-5" />,
       href: "/admin/kantor",
     },
-    {
-      id: "wallet",
-      label: "Wallet",
-      icon: <Wallet className="h-5 w-5" />,
-      href: "/admin/wallet",
-    },
+    // {
+    //   id: "wallet",
+    //   label: "Wallet",
+    //   icon: <Wallet className="h-5 w-5" />,
+    //   href: "/admin/wallet",
+    // },
     {
       id: "task",
       label: "Tugas",
       icon: <ClipboardCheck className="h-5 w-5" />,
-      href: "#",
-      children: [
-        {
-          id: "tugas/tugas-anggota",
-          label: "Tugas Anggota",
-          href: "/admin/tugas",
-        },
-        {
-          id: "tugas/hasil",
-          label: "Hasil Tugas",
-          href: "/admin/tugas/hasil",
-        },
-        {
-          id: "tugas/hasil-rekrutmen",
-          label: "Hasil Rekrutmen",
-          href: "/admin/tugas/hasil-rekrutmen",
-        },
-        {
-          id: "tugas/hasil-simpatisan",
-          label: "Hasil Simpatisan",
-          href: "/admin/tugas/hasil-simpatisan",
-        },
-      ],
+      href: "/admin/tugas",
+      // children: [
+      //   {
+      //     id: "tugas/tugas-anggota",
+      //     label: "Tugas Anggota",
+      //     href: "/admin/tugas",
+      //   },
+      //   {
+      //     id: "tugas/hasil",
+      //     label: "Hasil Tugas",
+      //     href: "/admin/tugas/hasil",
+      //   },
+      //   {
+      //     id: "tugas/hasil-rekrutmen",
+      //     label: "Hasil Rekrutmen",
+      //     href: "/admin/tugas/hasil-rekrutmen",
+      //   },
+      //   {
+      //     id: "tugas/hasil-simpatisan",
+      //     label: "Hasil Simpatisan",
+      //     href: "/admin/tugas/hasil-simpatisan",
+      //   },
+      // ],
     },
     {
       id: "pengumuman",

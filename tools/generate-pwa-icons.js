@@ -15,7 +15,7 @@ const run = async () => {
   if (!fs.existsSync(iconsDir)) fs.mkdirSync(iconsDir, { recursive: true });
 
   // Prefer `digital-kta.png` else fallback to `digital-kta-logo.png` or others
-  const candidates = ['digital-kta.png', 'digital-kta-logo.png', 'logo-koperasi-merah-putih-online.webp'];
+  const candidates = ['digital-kta.png', 'digital-kta-logo.png', 'logo.webp'];
   const source = candidates.map((c) => path.join(publicDir, c)).find((p) => fs.existsSync(p));
 
   if (!source) {

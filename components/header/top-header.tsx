@@ -188,7 +188,7 @@ export default function Header() {
               <div className="relative">
                 <div className="flex items-center gap-1">
                   <Image
-                    src="/logo-koperasi-merah-putih-online.webp"
+                    src="/logo.webp"
                     alt="Digital KTA Logo"
                     width={50}
                     height={50}
@@ -199,7 +199,7 @@ export default function Header() {
                       Digital KTA
                     </h2>
                     <p className="text-xs text-gray-600 mt-[-5px]">
-                      Simpan Pinjam & Marketplace
+                      Keanggotaan #AntiRibet
                     </p>
                   </div>
                 </div>

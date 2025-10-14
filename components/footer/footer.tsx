@@ -59,7 +59,7 @@ export default function Footer() {
                 {/* Struktur diubah agar logo dan teks sejajar */}
                 <div className="flex items-center gap-4 mb-4">
                   <Image
-                    src="/logo-koperasi-merah-putih-online.webp"
+                    src="/logo.webp"
                     alt="Digital KTA Logo"
                     width={75}
                     height={75}
@@ -70,7 +70,7 @@ export default function Footer() {
                       Digital KTA
                     </h2>
                     <p className="text-sm text-gray-600">
-                      Koperasi Simpan Pinjam & Marketplace untuk UMKM
+                      Koperasi Keanggotaan #AntiRibet untuk UMKM
                     </p>
                   </div>
                 </div>

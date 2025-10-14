@@ -163,21 +163,21 @@ export default function FormPengumuman({
         </div>
 
         {/* Status */}
-          <div className="flex flex-col gap-y-1.5 col-span-2">
-            <Label htmlFor="status">Status</Label>
-            <select
-              id="status"
-              value={form.status ?? 1}
-              onChange={(e) =>
-                setForm({ ...form, status: Number(e.target.value) })
-              }
-              disabled={readonly}
-              className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <option value={1}>Aktif</option>
-              <option value={0}>Tidak Aktif</option>
-            </select>
-          </div>
+        <div className="flex flex-col gap-y-1.5 col-span-2">
+          <Label htmlFor="status">Status</Label>
+          <select
+            id="status"
+            value={Number(form.status ?? 1)}
+            onChange={(e) =>
+              setForm({ ...form, status: Number(e.target.value) })
+            }
+            disabled={readonly}
+            className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <option value={1}>Aktif</option>
+            <option value={0}>Tidak Aktif</option>
+          </select>
+        </div>
       </div>
 
       {!readonly && (

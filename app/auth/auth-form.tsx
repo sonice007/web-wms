@@ -349,7 +349,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
             <div className="flex items-center justify-center mb-6">
               <div className="flex items-center gap-1">
                 <Image
-                  src="/logo-koperasi-merah-putih-online.webp"
+                  src="/logo.webp"
                   alt="Digital KTA Logo"
                   width={50}
                   height={50}
@@ -360,7 +360,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
                     Digital KTA
                   </h2>
                   <p className="text-xs text-gray-600 mt-[-5px]">
-                    Simpan Pinjam & Marketplace
+                    Keanggotaan #AntiRibet
                   </p>
                 </div>
               </div>
@@ -369,8 +369,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
             <div className="w-16 h-1 bg-gradient-to-r from-red-600 to-red-400 mx-auto mb-4"></div>
 
             <p className="text-base font-medium text-gray-700 max-w-sm mx-auto leading-relaxed">
-              Sistem Manajemen Koperasi Terintegrasi untuk Simpan Pinjam,
-              Pengelolaan Anggota, dan Operasional Keuangan
+              Kartu Anggota Anda, kini di dalam ponsel. Akses semua identitas dan manfaat keanggotaan Anda dengan praktis, aman, dan modern. Ucapkan selamat tinggal pada kartu fisik!
             </p>
 
             <div className="mt-6 flex justify-center space-x-4 text-sm text-gray-600">
@@ -424,7 +423,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
           <motion.div variants={variants} className="text-center">
             <div className="flex items-center justify-center mb-4 gap-1">
               <Image
-                src="/logo-koperasi-merah-putih-online.webp"
+                src="/logo.webp"
                 alt="Digital KTA Logo"
                 width={50}
                 height={50}
@@ -435,7 +434,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
                   Digital KTA
                 </h2>
                 <p className="text-xs text-gray-600 mt-[-5px]">
-                  Simpan Pinjam & Marketplace
+                  Keanggotaan #AntiRibet
                 </p>
               </div>
             </div>
