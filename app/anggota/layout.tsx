@@ -1,5 +1,4 @@
 import type React from "react";
-import { Logo } from "@/components/logo";
 
 export default function AuthLayout({
   children,

@@ -16,9 +16,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Swal from "sweetalert2";
 import {
-  useCreateAnggotaMutation,
-} from "@/services/admin/anggota.service";
-import {
   Card,
   CardContent,
   CardDescription,
@@ -34,7 +31,8 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { UserPlus, Loader2 } from "lucide-react";
-
+import { useRegisterMutation } from "@/services/admin/anggota.service";
+import { extractApiErrorMessage, hasErrorString, isFetchBaseQueryError } from "@/lib/error-format";
 
 const religions = [
   "Islam",
@@ -63,7 +61,7 @@ export default function RegisterForm() {
   const dropdownKotaRef = useRef<HTMLDivElement>(null);
   const dropdownKecamatanRef = useRef<HTMLDivElement>(null);
   const dropdownKelurahanRef = useRef<HTMLDivElement>(null);
-  const [createAnggota, { isLoading: isCreating }] = useCreateAnggotaMutation();
+  const [register, { isLoading: isCreating }] = useRegisterMutation();
 
   const [formData, setFormData] = useState({
     // Group 1: Akun
@@ -220,6 +218,8 @@ export default function RegisterForm() {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
 
     try {
       // validasi minimal
@@ -227,19 +227,17 @@ export default function RegisterForm() {
         throw new Error("Nama, Email, Telepon, dan KTP wajib diisi");
       if (!formData.gender || !["M", "F"].includes(formData.gender as string))
         throw new Error("Gender wajib diisi (M/F)");
-
       if (!formData.password || formData.password.trim().length < 8)
         throw new Error("Password minimal 8 karakter");
       if (formData.password !== formData.password_confirmation)
         throw new Error("Konfirmasi password tidak cocok");
 
       const fd = new FormData();
-      
-      fd.append("name", formData.name as string);
-      fd.append("email", formData.email as string);
-      fd.append("phone", formData.phone as string);
+      fd.append("name", formData.name);
+      fd.append("email", formData.email);
+      fd.append("phone", formData.phone);
       fd.append("address", formData.address ?? "");
-      fd.append("gender", formData.gender as string);
+      fd.append("gender", formData.gender);
       fd.append("birth_date", formData.birth_date ?? "");
       fd.append("birth_place", formData.birth_place ?? "");
       fd.append("status", String(formData.status));
@@ -248,16 +246,19 @@ export default function RegisterForm() {
       if (formData.regency_id) fd.append("regency_id", formData.regency_id);
       if (formData.district_id) fd.append("district_id", formData.district_id);
       if (formData.village_id) fd.append("village_id", formData.village_id);
-      // Pengecekan agar nilai 0 (nol) tetap dikirim
-      if (formData.rt !== undefined && formData.rt !== null) fd.append("rt", String(formData.rt));
-      if (formData.rw !== undefined && formData.rw !== null) fd.append("rw", String(formData.rw));
-      
+      if (formData.rt !== undefined && formData.rt !== null)
+        fd.append("rt", String(formData.rt));
+      if (formData.rw !== undefined && formData.rw !== null)
+        fd.append("rw", String(formData.rw));
       if (formData.religion) fd.append("religion", formData.religion);
-      if (formData.marital_status) fd.append("marital_status", formData.marital_status);
+      if (formData.marital_status)
+        fd.append("marital_status", formData.marital_status);
       if (formData.occupation) fd.append("occupation", formData.occupation);
-      if (formData.last_education) fd.append("last_education", formData.last_education);
+      if (formData.last_education)
+        fd.append("last_education", formData.last_education);
       if (formData.phone_home) fd.append("phone_home", formData.phone_home);
-      if (formData.phone_office) fd.append("phone_office", formData.phone_office);
+      if (formData.phone_office)
+        fd.append("phone_office", formData.phone_office);
       if (formData.phone_faksimili)
         fd.append("phone_faksimili", formData.phone_faksimili);
       if (formData.facebook) fd.append("facebook", formData.facebook);
@@ -266,26 +267,43 @@ export default function RegisterForm() {
       if (formData.whatsapp) fd.append("whatsapp", formData.whatsapp);
       if (formData.tiktok) fd.append("tiktok", formData.tiktok);
       if (formData.path) fd.append("path", formData.path);
-      
+
+      // yang tadi belum terkirim:
+      if (formData.referalCode) fd.append("referal", formData.referalCode);
+      if (formData.upload_ktp) fd.append("upload_ktp", formData.upload_ktp);
+      if (formData.upload_foto) fd.append("upload_foto", formData.upload_foto);
+
       fd.append("password", formData.password);
       fd.append("password_confirmation", formData.password_confirmation);
-      
-      await createAnggota(fd).unwrap();
-      Swal.fire("Sukses", "Daftar anggota berhasil", "success");
-      setIsLoading(true);
 
-      setTimeout(() => {
-        setIsLoading(false);
-        router.push("/anggota/login");
-      }, 1500);
-    } catch (err) {
-      const msg =
-        err instanceof Error ? err.message : "Terjadi kesalahan saat menyimpan";
-      Swal.fire("Gagal", msg, "error");
-      console.error(err);
+      // PANGGIL API
+      await register(fd).unwrap();
+
+      // TUNGGU alert sukses SELESAI dulu, baru redirect
+      await Swal.fire({
+        title: "Sukses",
+        text: "Daftar anggota berhasil",
+        icon: "success",
+        confirmButtonText: "OK",
+      });
+
+      router.push("/anggota/login");
+    } catch (error: unknown) {
+      let msg = "Terjadi kesalahan saat menyimpan";
+
+      if (isFetchBaseQueryError(error)) {
+        const serverMsg = extractApiErrorMessage(error.data);
+        if (serverMsg) msg = serverMsg;
+        else if (hasErrorString(error)) msg = error.error; // e.g. FETCH_ERROR
+      } else if (error instanceof Error && error.message) {
+        msg = error.message;
+      }
+
+      await Swal.fire("Gagal", msg, "error");
+      console.error(error);
+    } finally {
+      setIsLoading(false);
     }
-    e.preventDefault();
-
   };
 
   const handleProvinsiSelect = (provinsi: { id: string; name: string }) => {
@@ -553,6 +571,28 @@ export default function RegisterForm() {
                   required
                   className="h-11"
                 />
+              </div>
+
+              {/* Gender */}
+              <div className="space-y-2">
+                <Label htmlFor="gender">
+                  Jenis Kelamin <span className="text-destructive">*</span>
+                </Label>
+                <Select
+                  value={formData.gender}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, gender: value })
+                  }
+                  required
+                >
+                  <SelectTrigger id="gender" className="h-11 w-full">
+                    <SelectValue placeholder="Pilih jenis kelamin" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="M">Laki-laki</SelectItem>
+                    <SelectItem value="F">Perempuan</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="space-y-2">
@@ -983,7 +1023,10 @@ export default function RegisterForm() {
                   placeholder="021xxxxxxxx"
                   value={formData.phone_faksimili}
                   onChange={(e) =>
-                    setFormData({ ...formData, phone_faksimili: e.target.value })
+                    setFormData({
+                      ...formData,
+                      phone_faksimili: e.target.value,
+                    })
                   }
                   className="h-11"
                 />
@@ -1077,7 +1120,7 @@ export default function RegisterForm() {
               <Button
                 type="submit"
                 className="w-full h-12 font-semibold text-base"
-                disabled={isLoading}
+                disabled={isLoading || isCreating}
               >
                 {isLoading ? "Memproses Pendaftaran..." : "Daftar Sekarang"}
               </Button>

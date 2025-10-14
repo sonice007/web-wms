@@ -592,7 +592,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
             </motion.div>
           </motion.form>
 
-          <motion.div
+          {/* <motion.div
             variants={variants}
             className="text-center text-sm bg-white/60 backdrop-blur-sm rounded-lg p-4 border border-red-100"
           >
@@ -605,7 +605,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
             >
               {isLogin ? "Daftar sekarang" : "Masuk ke sistem"}
             </a>
-          </motion.div>
+          </motion.div> */}
         </motion.div>
       </div>
     </div>

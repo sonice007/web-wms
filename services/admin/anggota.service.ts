@@ -66,21 +66,20 @@ export const anggotaApi = apiSlice.injectEndpoints({
     }),
 
     // ✏️ Update Anggota by ID
-    updateAnggota: builder.mutation<
-      Anggota,
-      { id: number; payload: FormData }
-    >({
-      query: ({ id, payload }) => ({
-        url: `/anggota/anggotas/${id}?_method=PUT`,
-        method: "POST",
-        body: payload,
-      }),
-      transformResponse: (response: {
-        code: number;
-        message: string;
-        data: Anggota;
-      }) => response.data,
-    }),
+    updateAnggota: builder.mutation<Anggota, { id: number; payload: FormData }>(
+      {
+        query: ({ id, payload }) => ({
+          url: `/anggota/anggotas/${id}?_method=PUT`,
+          method: "POST",
+          body: payload,
+        }),
+        transformResponse: (response: {
+          code: number;
+          message: string;
+          data: Anggota;
+        }) => response.data,
+      }
+    ),
 
     // ❌ Delete Anggota by ID
     deleteAnggota: builder.mutation<{ code: number; message: string }, number>({
@@ -138,6 +137,20 @@ export const anggotaApi = apiSlice.injectEndpoints({
         message: response.message,
       }),
     }),
+
+    // 🆕 Public Register (mirip createAnggota, endpoint: /register)
+    register: builder.mutation<Anggota, FormData>({
+      query: (payload) => ({
+        url: `/register`,
+        method: "POST",
+        body: payload,
+      }),
+      transformResponse: (response: {
+        code: number;
+        message: string;
+        data: Anggota;
+      }) => response.data,
+    }),
   }),
   overrideExisting: false,
 });
@@ -150,4 +163,5 @@ export const {
   useDeleteAnggotaMutation,
   useExportAnggotaExcelMutation,
   useImportAnggotaExcelMutation,
+  useRegisterMutation,
 } = anggotaApi;
