@@ -1,148 +1,150 @@
+"use client"
+
 import { AnnouncementCard } from "@/components/announcement-card";
 import { Badge } from "@/components/ui/badge";
 import { Megaphone, Bell } from "lucide-react";
 
-// Sample announcements data
-const announcements = [
-  {
-    id: "1",
-    title: "Pendaftaran Anggota Baru Dibuka",
-    excerpt:
-      "Daftarkan diri Anda dan dapatkan benefit eksklusif sebagai anggota",
-    content:
-      "Kami dengan senang hati mengumumkan bahwa pendaftaran anggota baru telah dibuka untuk periode ini. Sebagai anggota, Anda akan mendapatkan berbagai benefit eksklusif termasuk akses ke program pelatihan, networking events, dan kesempatan untuk berkontribusi dalam berbagai kegiatan organisasi.",
-    imageUrl: "/announcement-registration.jpg",
-    date: "15 Jan 2024",
-    category: "Keanggotaan",
-    isImportant: true,
-  },
-  {
-    id: "2",
-    title: "Rapat Koordinasi Bulanan",
-    excerpt:
-      "Hadir dalam rapat koordinasi untuk membahas program kerja bulan ini",
-    content:
-      "Rapat koordinasi bulanan akan dilaksanakan pada tanggal 20 Januari 2024. Agenda rapat meliputi evaluasi program bulan lalu, pembahasan program kerja bulan ini, dan diskusi mengenai strategi pengembangan organisasi ke depan.",
-    imageUrl: "/meeting-coordination.jpg",
-    date: "12 Jan 2024",
-    category: "Acara",
-    isImportant: false,
-  },
-  {
-    id: "3",
-    title: "Program Pelatihan Gratis",
-    excerpt:
-      "Ikuti pelatihan skill development untuk meningkatkan kompetensi Anda",
-    content:
-      "Organisasi kami menyelenggarakan program pelatihan gratis untuk seluruh anggota. Pelatihan ini mencakup berbagai topik seperti leadership, public speaking, dan digital marketing. Daftarkan diri Anda segera karena kuota terbatas.",
-    imageUrl: "/training-program.png",
-    date: "10 Jan 2024",
-    category: "Pelatihan",
-    isImportant: true,
-  },
-  {
-    id: "4",
-    title: "Kegiatan Bakti Sosial Bulan Ini",
-    excerpt:
-      "Mari berpartisipasi dalam kegiatan bakti sosial untuk membantu masyarakat",
-    content:
-      "Dalam rangka meningkatkan kepedulian sosial, kami akan mengadakan kegiatan bakti sosial pada akhir bulan ini. Kegiatan meliputi pembagian sembako, pemeriksaan kesehatan gratis, dan renovasi fasilitas umum di daerah terpencil.",
-    imageUrl: "/training-program.png",
-    date: "8 Jan 2024",
-    category: "Sosial",
-    isImportant: false,
-  },
-  {
-    id: "5",
-    title: "Update Sistem Aplikasi Digital KTA",
-    excerpt:
-      "Sistem aplikasi telah diperbarui dengan fitur-fitur baru yang lebih baik",
-    content:
-      "Kami telah melakukan update pada sistem aplikasi Digital KTA dengan menambahkan berbagai fitur baru untuk meningkatkan pengalaman pengguna. Fitur baru meliputi notifikasi real-time, sistem poin yang lebih transparan, dan dashboard analytics yang lebih informatif.",
-    imageUrl: "/training-program.png",
-    date: "5 Jan 2024",
-    category: "Teknologi",
-    isImportant: false,
-  },
-  {
-    id: "6",
-    title: "Pengumuman Pemenang Kompetisi",
-    excerpt: "Selamat kepada para pemenang kompetisi bulan lalu",
-    content:
-      "Kami mengucapkan selamat kepada para pemenang kompetisi bulan lalu. Terima kasih atas partisipasi luar biasa dari seluruh anggota. Hadiah akan segera dikirimkan ke alamat masing-masing pemenang dalam waktu 7 hari kerja.",
-    imageUrl: "/training-program.png",
-    date: "3 Jan 2024",
-    category: "Kompetisi",
-    isImportant: false,
-  },
-];
+// Import hook API service dan komponen tambahan (misalnya Skeleton dan Card)
+import { useGetPengumumanListQuery } from "@/services/admin/pengumuman.service"; 
+import { Card } from "@/components/ui/card";
+// Removed Skeleton import (module missing) and defined a local Skeleton component below.
+import { Pengumuman } from "@/types/admin/pengumuman";
+
+type SkeletonProps = React.HTMLAttributes<HTMLDivElement>;
+
+const Skeleton = ({ className = "", ...props }: SkeletonProps) => (
+  <div
+    className={`animate-pulse rounded-md bg-muted ${className}`}
+    {...props}
+  />
+);
+
 
 export default function PengumumanPage() {
-  const importantAnnouncements = announcements.filter((a) => a.isImportant);
-  const regularAnnouncements = announcements.filter((a) => !a.isImportant);
+    // Pengaturan pagination/query default (sesuaikan jika perlu)
+    const currentPage = 1;
+    const itemsPerPage = 10;
+    const query = "";
 
-  return (
-    <div className="space-y-6 p-4 safe-area-top">
-      {/* Header */}
-      <div className="pt-4 flex gap-3">
-        <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
-          <Megaphone className="w-6 h-6 text-primary" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold text-foreground leading-tight">
-            Pengumuman
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Informasi terbaru untuk seluruh anggota
-          </p>
-        </div>
-      </div>
+    const { data, isLoading, isError } = useGetPengumumanListQuery({
+        page: currentPage,
+        paginate: itemsPerPage,
+        search: query,
+    });
 
-      {/* Important Announcements */}
-      {importantAnnouncements.length > 0 && (
-        <section className="space-y-3">
-          <div className="flex items-center gap-2 pb-1 border-b border-border">
-            <Bell className="w-5 h-5 text-destructive" />
-            <h2 className="text-lg font-bold">Pengumuman Penting</h2>
-            <Badge variant="destructive" className="h-5 text-xs">
-              {importantAnnouncements.length}
-            </Badge>
-          </div>
-          <div className="space-y-4">
-            {importantAnnouncements.map((announcement, index) => (
-              <div key={announcement.id}>
-                <AnnouncementCard
-                  {...announcement}
-                  variant={index % 2 === 0 ? "large" : "card"}
-                />
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
+    // Ekstrak data pengumuman dari respons API. Gunakan array kosong jika data belum tersedia.
+    const announcements: Pengumuman[] = (data as any)?.data || [];
 
-      {/* Regular Announcements */}
-      <section className="space-y-3">
-        <div className="flex items-center gap-2 pb-1 border-b border-border">
-          <Megaphone className="w-5 h-5 text-primary" />
-          <h2 className="text-lg font-bold">Semua Pengumuman</h2>
-          <Badge variant="secondary" className="h-5 text-xs">
-            {regularAnnouncements.length}
-          </Badge>
+    // Filter pengumuman menjadi penting dan reguler (anggap properti isImportant opsional, default false)
+    const regularAnnouncements = (announcements as (Pengumuman & { isImportant?: boolean })[])
+        .filter(a => !a.isImportant);
+
+    // --- Penanganan Loading State ---
+    if (isLoading) {
+        return (
+            <div className="space-y-6 p-4 safe-area-top">
+                <div className="pt-4 flex gap-3">
+                    <Skeleton className="w-12 h-12 rounded-xl" />
+                    <div>
+                        <Skeleton className="h-6 w-48 mb-1" />
+                        <Skeleton className="h-4 w-64" />
+                    </div>
+                </div>
+                {/* Skeleton untuk Pengumuman Penting */}
+                <section className="space-y-3">
+                    <Skeleton className="h-5 w-full" />
+                    <div className="space-y-4">
+                        <Skeleton className="h-28 w-full" />
+                        <Skeleton className="h-28 w-full" />
+                    </div>
+                </section>
+                {/* Skeleton untuk Semua Pengumuman */}
+                <section className="space-y-3">
+                    <Skeleton className="h-5 w-full" />
+                    <div className="grid grid-cols-1 gap-4">
+                        <Skeleton className="h-24 w-full" />
+                        <Skeleton className="h-24 w-full" />
+                        <Skeleton className="h-24 w-full" />
+                    </div>
+                </section>
+            </div>
+        );
+    }
+
+    // --- Penanganan Error State ---
+    if (isError) {
+        return (
+            <div className="p-4 safe-area-top">
+                <Card className="p-5 text-center bg-red-50 border-red-300 text-red-700">
+                    Gagal memuat pengumuman. Terjadi kesalahan saat mengambil data dari server.
+                </Card>
+            </div>
+        );
+    }
+
+    // --- Penanganan Data Kosong ---
+    if (announcements.length === 0) {
+        return (
+            <div className="space-y-6 p-4 safe-area-top">
+                <div className="pt-4 flex gap-3">
+                    <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                        <Megaphone className="w-6 h-6 text-primary" />
+                    </div>
+                    <div>
+                        <h1 className="text-2xl font-bold text-foreground leading-tight">
+                            Pengumuman
+                        </h1>
+                        <p className="text-sm text-muted-foreground">
+                            Informasi terbaru untuk seluruh anggota
+                        </p>
+                    </div>
+                </div>
+                <Card className="p-5 text-center text-muted-foreground border-dashed">
+                    Tidak ada pengumuman yang tersedia saat ini.
+                </Card>
+            </div>
+        );
+    }
+
+
+    // --- Render Konten Halaman dengan Data API ---
+    return (
+        <div className="space-y-6 p-4 safe-area-top">
+            {/* Header */}
+            <div className="pt-4 flex gap-3">
+                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                    <Megaphone className="w-6 h-6 text-primary" />
+                </div>
+                <div>
+                    <h1 className="text-2xl font-bold text-foreground leading-tight">
+                        Pengumuman
+                    </h1>
+                    <p className="text-sm text-muted-foreground">
+                        Informasi terbaru untuk seluruh anggota
+                    </p>
+                </div>
+            </div>
+
+            {/* Regular Announcements */}
+            <section className="space-y-3">
+                <div className="flex items-center gap-2 pb-1 border-b border-border">
+                    <Megaphone className="w-5 h-5 text-primary" />
+                    <h2 className="text-lg font-bold">Semua Pengumuman</h2>
+                    <Badge variant="secondary" className="h-5 text-xs">
+                        {regularAnnouncements.length}
+                    </Badge>
+                </div>
+                <div className="grid grid-cols-1 gap-4">
+                    {/* Menggunakan data dari API */}
+                    {regularAnnouncements.map((announcement, index) => (
+                        <AnnouncementCard
+                            key={announcement.id}
+                            {...announcement}
+                        />
+                    ))}
+                </div>
+                {/* Tambahkan tombol Load More atau pagination jika itemsPerPage tidak mencakup semua data */}
+            </section>
         </div>
-        <div className="grid grid-cols-1 gap-4">
-          {regularAnnouncements.map((announcement, index) => (
-            <AnnouncementCard
-              key={announcement.id}
-              {...announcement}
-              variant={
-                index % 3 === 0 ? "large" : index % 3 === 1 ? "card" : "compact"
-              }
-            />
-          ))}
-        </div>
-      </section>
-    </div>
-  );
+    );
 }
-

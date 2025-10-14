@@ -43,9 +43,9 @@ export const alumniApi = apiSlice.injectEndpoints({
     }),
 
     // 🔍 Get Pengumuman Category by Slug
-    getPengumumanBySlug: builder.query<Pengumuman, string>({
-      query: (slug) => ({
-        url: `/announcement/${slug}`,
+    getPengumumanBySlug: builder.query<Pengumuman, number>({
+      query: (id) => ({
+        url: `/announcement/${id}`,
         method: "GET",
       }),
       transformResponse: (response: {

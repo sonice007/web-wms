@@ -2,62 +2,70 @@
 
 import type React from "react"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useMemo } from "react"
 import { Card } from "@/components/ui/card"
+import {
+  useGetPengumumanListQuery,
+} from "@/services/admin/pengumuman.service";
+import { Pengumuman } from "@/types/admin/pengumuman";
+import Link from "next/link";
 
-interface Announcement {
-  id: string
-  title: string
-  description: string
-  imageUrl: string
-}
-
-const announcements: Announcement[] = [
-  {
-    id: "1",
-    title: "Pendaftaran Anggota Baru Dibuka",
-    description: "Daftarkan diri Anda dan dapatkan benefit eksklusif sebagai anggota",
-    imageUrl: "/announcement-registration.jpg",
-  },
-  {
-    id: "2",
-    title: "Rapat Koordinasi Bulanan",
-    description: "Hadir dalam rapat koordinasi untuk membahas program kerja bulan ini",
-    imageUrl: "/meeting-coordination.jpg",
-  },
-  {
-    id: "3",
-    title: "Program Pelatihan Gratis",
-    description: "Ikuti pelatihan skill development untuk meningkatkan kompetensi Anda",
-    imageUrl: "/training-program.png",
-  },
-]
+// Local fallback Skeleton component to avoid missing module error
+const Skeleton: React.FC<{ className?: string }> = ({ className = "" }) => (
+  <div className={`animate-pulse bg-muted rounded-md ${className}`} />
+)
 
 export function AnnouncementCarousel() {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [touchStart, setTouchStart] = useState(0)
   const [touchEnd, setTouchEnd] = useState(0)
   const autoSlideRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  
+  // Asumsi nilai default untuk pagination, sesuaikan jika perlu
+  const currentPage = 1;
+  const itemsPerPage = 10;
+  const query = "";
+
+  const { data, isLoading, isError } = useGetPengumumanListQuery({
+      page: currentPage,
+      paginate: itemsPerPage,
+      search: query,
+  });
+
+  // Ekstrak data pengumuman dari respons API. Gunakan array kosong jika data belum tersedia.
+  const announcements: Pengumuman[] = (data as any)?.data || [];
+
+  // Reset currentIndex ketika data berubah (misalnya, setelah refetch atau pertama kali dimuat)
+  useEffect(() => {
+    setCurrentIndex(0);
+  }, [announcements.length])
+
 
   useEffect(() => {
-    autoSlideRef.current = setInterval(() => {
-      setCurrentIndex((prev) => (prev === announcements.length - 1 ? 0 : prev + 1))
-    }, 10000)
+    if (announcements.length > 0) {
+      // Pastikan ada pengumuman sebelum memulai autoslide
+      autoSlideRef.current = setInterval(() => {
+        setCurrentIndex((prev) => (prev === announcements.length - 1 ? 0 : prev + 1))
+      }, 10000)
+    }
 
     return () => {
       if (autoSlideRef.current) {
         clearInterval(autoSlideRef.current)
       }
     }
-  }, [])
+  }, [announcements.length]) // Dependency array menyertakan announcements.length
 
   const resetAutoSlide = () => {
     if (autoSlideRef.current) {
       clearInterval(autoSlideRef.current)
     }
-    autoSlideRef.current = setInterval(() => {
-      setCurrentIndex((prev) => (prev === announcements.length - 1 ? 0 : prev + 1))
-    }, 10000)
+    // Hanya atur interval jika ada pengumuman
+    if (announcements.length > 0) {
+      autoSlideRef.current = setInterval(() => {
+        setCurrentIndex((prev) => (prev === announcements.length - 1 ? 0 : prev + 1))
+      }, 10000)
+    }
   }
 
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -70,6 +78,7 @@ export function AnnouncementCarousel() {
 
   const handleTouchEnd = () => {
     if (!touchStart || !touchEnd) return
+    if (announcements.length === 0) return // Hentikan jika tidak ada data
 
     const distance = touchStart - touchEnd
     const isLeftSwipe = distance > 50
@@ -88,6 +97,66 @@ export function AnnouncementCarousel() {
     setTouchEnd(0)
   }
 
+  const formatDate = (dateString: string): string => {
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) {
+          return dateString; // Kembalikan string asli jika tidak valid
+      }
+      const options: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long', year: 'numeric' };
+      return date.toLocaleDateString('id-ID', options);
+    } catch (error) {
+      return dateString;
+    }
+  };
+
+  // --- Fungsi Helper untuk Menghapus Tag HTML ---
+  /**
+   * Menghapus tag HTML dari string (untuk membersihkan konten).
+   * @param htmlString String yang mengandung HTML
+   * @returns String teks murni
+   */
+  const stripHtmlTags = (htmlString: string): string => {
+    if (!htmlString) return '';
+    return htmlString.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ');
+  };
+  
+  // --- Penanganan Loading dan Error ---
+
+  if (isLoading) {
+    // Tampilkan skeleton/loading state saat data sedang diambil
+    return (
+      <div className="relative">
+        <Skeleton className="h-48 w-full rounded-xl" />
+        <div className="flex justify-center gap-2 mt-4">
+          <Skeleton className="h-2 w-6 rounded-full" />
+          <Skeleton className="h-2 w-2 rounded-full" />
+          <Skeleton className="h-2 w-2 rounded-full" />
+        </div>
+      </div>
+    );
+  }
+
+  if (isError) {
+    // Tampilkan pesan error jika query gagal
+    return (
+      <Card className="p-5 text-center text-red-600 border-red-600">
+        Gagal memuat pengumuman. Silakan coba lagi.
+      </Card>
+    );
+  }
+  
+  if (announcements.length === 0) {
+    // Tampilkan pesan jika tidak ada pengumuman
+    return (
+      <Card className="p-5 text-center text-muted-foreground">
+        Tidak ada pengumuman saat ini.
+      </Card>
+    );
+  }
+
+  // --- Render Carousel ---
+
   return (
     <div className="relative">
       <div
@@ -102,18 +171,22 @@ export function AnnouncementCarousel() {
         >
           {announcements.map((announcement) => (
             <div key={announcement.id} className="min-w-full">
-              <Card className="relative h-48 overflow-hidden border-0 shadow-lg">
-                <img
-                  src={announcement.imageUrl || "/placeholder.svg"}
-                  alt={announcement.title}
-                  className="absolute inset-0 w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-5 text-white">
-                  <h3 className="text-lg font-bold mb-1 text-balance">{announcement.title}</h3>
-                  <p className="text-sm opacity-90 text-pretty">{announcement.description}</p>
-                </div>
-              </Card>
+              <Link className="block" href={`/pengumuman/${announcement.id}`}>
+                <Card className="relative h-48 overflow-hidden border-0 shadow-lg">
+                  {/* Gunakan imageUrl dari data API jika ada */}
+                  <img
+                    src={announcement.image || "/placeholder.svg"} 
+                    alt={announcement.title}
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
+                  <div className="absolute bottom-0 left-0 right-0 p-5 text-white">
+                    <h3 className="text-lg font-bold mb-1 text-balance">{announcement.title}</h3>
+                    {/* Pastikan field description ada di data API */}
+                    <p className="text-sm opacity-90 text-pretty">{stripHtmlTags(announcement.content)}</p>
+                  </div>
+                </Card>
+              </Link>
             </div>
           ))}
         </div>
