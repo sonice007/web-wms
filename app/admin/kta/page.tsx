@@ -20,23 +20,20 @@ function KtaPageFallback() {
   );
 }
 
-/** Komponen yang MEMAKAI useSearchParams / useParams */
 function KtaPageContent() {
   const searchParams = useSearchParams();
   const params = useParams();
 
-  // Ambil id dari path /admin/kta/[id] ATAU dari query ?id=...
+  // id dari /admin/kta/[id] atau ?id=
   const rawId =
     (params?.id as string | undefined) ?? searchParams?.get("id") ?? undefined;
 
-  // Untuk KTACard (frontend): butuh ID numerik untuk fetch detail
   const numericId = useMemo(() => {
     if (!rawId) return undefined;
     return /^\d+$/.test(rawId) ? Number(rawId) : undefined;
   }, [rawId]);
 
-  // Untuk KTACardBack (backend): boleh pakai string nomor KTA atau id
-  const backId = rawId ?? "KTA-001234"; // fallback demo
+  const backId = rawId ?? "KTA-001234";
 
   const printRef = useRef<HTMLDivElement | null>(null);
   const handlePrint = () => window.print();
@@ -45,42 +42,75 @@ function KtaPageContent() {
     <div className="min-h-screen bg-background p-4">
       {/* Global print styles */}
       <style jsx global>{`
+        /* ============================
+           KENDALI UKURAN
+           ============================ */
+        :root {
+          --card-width-preview: 120mm; /* lebar di layar (preview) */
+          --card-width-print: 140mm; /* lebar saat CETAK (dibesarkan) */
+          --page-margin: 8mm;
+          --card-gap: 10mm;
+        }
+
+        /* Preview layar (WYSIWYG) */
         .kta-card-frame {
-          width: 360px;
+          width: var(--card-width-preview);
+          max-width: 100%;
         }
-        @media (min-width: 640px) {
-          .kta-card-frame {
-            width: 420px;
-          }
-        }
+
         @media print {
           @page {
-            size: A4;
-            margin: 12mm;
+            size: A4 portrait;
+            margin: var(--page-margin);
           }
+
+          html,
+          body,
+          #__next {
+            margin: 0 !important;
+            padding: 0 !important;
+            height: auto !important;
+            overflow: visible !important;
+            background: transparent !important;
+          }
+
+          /* hanya area kartu yang tampil */
+          body * {
+            visibility: hidden !important;
+          }
+          .print-area,
+          .print-area * {
+            visibility: visible !important;
+          }
+
+          .print-area {
+            position: fixed;
+            inset: 0;
+            margin: var(--page-margin);
+            display: grid;
+            justify-content: center;
+            align-content: start;
+            row-gap: var(--card-gap);
+          }
+
+          /* >>> INI yang menentukan LEBAR SAAT PRINT <<< */
+          .kta-card-frame {
+            width: var(--card-width-print) !important;
+          }
+
           body {
             -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
           }
+
           .no-print {
             display: none !important;
           }
-          .print-area {
-            break-inside: avoid;
-            page-break-inside: avoid;
-          }
-          .print-area > * {
-            break-inside: avoid;
-            page-break-inside: avoid;
-          }
-          .kta-card-frame {
-            width: 85.6mm;
-          } /* ukuran CR80 */
         }
       `}</style>
 
       <div className="space-y-6">
-        {/* Header */}
+        {/* Header (hilang saat print) */}
         <div className="pt-2 flex gap-3 no-print">
           <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
             <IdCard className="w-6 h-6 text-primary" />
@@ -95,25 +125,24 @@ function KtaPageContent() {
           </div>
         </div>
 
-        {/* Area yang dicetak */}
-        <div ref={printRef} className="space-y-6 print-area">
+        {/* === Area yang dicetak (dua kartu) === */}
+        <div
+          ref={printRef}
+          className="print-area flex flex-col items-center gap-[var(--card-gap)]"
+        >
           {/* Depan */}
-          <div className="flex items-center justify-center">
-            <div className="kta-card-frame">
-              <KTACard memberId={numericId} onClickRoute="/admin/kta/[id]" />
-            </div>
+          <div className="kta-card-frame">
+            <KTACard memberId={numericId} onClickRoute="/admin/kta/[id]" />
           </div>
           {/* Belakang */}
-          <div className="flex items-center justify-center">
-            <div className="kta-card-frame">
-              <KTACardBack memberId={backId} />
-            </div>
+          <div className="kta-card-frame">
+            <KTACardBack memberId={backId} />
           </div>
         </div>
 
-        {/* Tombol Print */}
-        <div>
-          <Button className="w-full no-print" onClick={handlePrint} size="lg">
+        {/* Tombol Print (hilang saat print) */}
+        <div className="no-print">
+          <Button className="w-full" onClick={handlePrint} size="lg">
             <PrinterIcon />
             <span> Print / Download PDF</span>
           </Button>
