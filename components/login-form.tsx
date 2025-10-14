@@ -62,7 +62,7 @@ export default function LoginPage() {
             <Lock className="w-8 h-8 text-white" />
           </div>
           <CardTitle className="text-2xl font-bold text-center">
-            Selamat Datang Kembali
+            Digital KTA
           </CardTitle>
           <CardDescription className="text-center">
             Masuk ke akun Anda untuk melanjutkan

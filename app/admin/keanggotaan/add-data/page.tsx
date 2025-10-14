@@ -46,7 +46,8 @@ function AnggotaAddEditPageInner() {
       Anggota & { password?: string; password_confirmation?: string }
     >
   >({});
-  
+ 
+  console.log({ detailData, form });
   // ====================================================================
   // FIX: Mengisi form saat detailData tersedia
   // ====================================================================

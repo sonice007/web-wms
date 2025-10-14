@@ -14,6 +14,10 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import Swal from "sweetalert2";
+import {
+  useCreateAnggotaMutation,
+} from "@/services/admin/anggota.service";
 import {
   Card,
   CardContent,
@@ -31,28 +35,6 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { UserPlus, Loader2 } from "lucide-react";
 
-const districts: Record<string, { id: string; name: string }[]> = {
-  "1-1": [
-    { id: "1-1-1", name: "Gambir" },
-    { id: "1-1-2", name: "Tanah Abang" },
-    { id: "1-1-3", name: "Menteng" },
-  ],
-  "2-1": [
-    { id: "2-1-1", name: "Bandung Wetan" },
-    { id: "2-1-2", name: "Sumur Bandung" },
-  ],
-};
-
-const subDistricts: Record<string, { id: string; name: string }[]> = {
-  "1-1-1": [
-    { id: "1-1-1-1", name: "Gambir" },
-    { id: "1-1-1-2", name: "Cideng" },
-  ],
-  "2-1-1": [
-    { id: "2-1-1-1", name: "Cihapit" },
-    { id: "2-1-1-2", name: "Citarum" },
-  ],
-};
 
 const religions = [
   "Islam",
@@ -62,13 +44,13 @@ const religions = [
   "Buddha",
   "Konghucu",
 ];
-const maritalStatuses = [
+const marital_statuses = [
   "Belum Menikah",
   "Menikah",
   "Cerai Hidup",
   "Cerai Mati",
 ];
-const educationLevels = ["SD", "SMP", "SMA/SMK", "D3", "S1", "S2", "S3"];
+const last_educationLevels = ["SD", "SMP", "SMA/SMK", "D3", "S1", "S2", "S3"];
 
 export default function RegisterForm() {
   const router = useRouter();
@@ -81,50 +63,56 @@ export default function RegisterForm() {
   const dropdownKotaRef = useRef<HTMLDivElement>(null);
   const dropdownKecamatanRef = useRef<HTMLDivElement>(null);
   const dropdownKelurahanRef = useRef<HTMLDivElement>(null);
+  const [createAnggota, { isLoading: isCreating }] = useCreateAnggotaMutation();
 
   const [formData, setFormData] = useState({
     // Group 1: Akun
-    fullName: "",
+    name: "",
     email: "",
     password: "",
-    confirmPassword: "",
+    password_confirmation: "",
     referalCode: "",
+    gender: "",
+    status: 0,
     // Group 2: Identitas
-    ktpPhoto: null as File | null,
-    nik: "",
-    province: "",
-    city: "",
-    district: "",
-    subDistrict: "",
+    upload_ktp: null as File | null,
+    upload_foto: null as File | null,
+    ktp: "",
+    province_id: "",
+    regency_id: "",
+    district_id: "",
+    village_id: "",
     rt: "",
     rw: "",
-    detailAddress: "",
-    birthDate: "",
-    birthPlace: "",
+    address: "",
+    birth_date: "",
+    birth_place: "",
     religion: "",
-    maritalStatus: "",
+    marital_status: "",
     occupation: "",
-    education: "",
+    last_education: "",
     // Group 3: Kontak
     phone: "",
-    homePhone: "",
-    officePhone: "",
-    fax: "",
+    phone_home: "",
+    phone_office: "",
+    phone_faksimili: "",
     // Group 4: Media Sosial
     facebook: "",
     instagram: "",
     twitter: "",
     whatsapp: "",
     tiktok: "",
+    path: "",
   });
   const [isLoading, setIsLoading] = useState(false);
   const [ktpPreview, setKtpPreview] = useState<string | null>(null);
+  const [fotoPreview, setFotoPreview] = useState<string | null>(null);
 
   const [openSelect, setOpenSelect] = useState({
-    province: false,
-    city: false,
-    district: false,
-    subDistrict: false,
+    province_id: false,
+    regency_id: false,
+    district_id: false,
+    village_id: false,
   });
 
   // provinsi
@@ -149,9 +137,9 @@ export default function RegisterForm() {
       page: 1,
       paginate: 100,
       search: debouncedProvinsiSearch,
-      province_id: formData.province,
+      province_id: formData.province_id,
     },
-    { skip: !formData.province || debouncedKotaSearch.length < 2 }
+    { skip: !formData.province_id || debouncedKotaSearch.length < 2 }
   );
   const filteredKota = useMemo(() => {
     if (!kotaData?.data) return [];
@@ -164,44 +152,44 @@ export default function RegisterForm() {
   }, [kotaData, debouncedKotaSearch]);
 
   // kecamatan
-  const [districtSearch, setDistrictSearch] = useState("");
-  const debouncedDistrictSearch = useDebounce(districtSearch, 500);
+  const [district_idSearch, setDistrictSearch] = useState("");
+  const debouncedDistrictSearch = useDebounce(district_idSearch, 500);
   const { data: kecamatanData, isLoading: isKecamatanLoading } =
     useGetKecamatanListQuery(
       {
         page: 1,
         paginate: 100,
         search: debouncedDistrictSearch,
-        regency_id: formData.city,
+        regency_id: formData.regency_id,
       },
-      { skip: !formData.city || debouncedDistrictSearch.length < 2 }
+      { skip: !formData.regency_id || debouncedDistrictSearch.length < 2 }
     );
   const filteredDistrict = useMemo(() => {
     if (!kecamatanData?.data) return [];
-    return kecamatanData.data.filter((district) => {
-      return district.name
+    return kecamatanData.data.filter((district_id) => {
+      return district_id.name
         .toLocaleLowerCase()
         .includes(debouncedDistrictSearch.toLowerCase());
     });
   }, [kecamatanData, debouncedDistrictSearch]);
 
   // kelurahan
-  const [subDistrictSearch, setSubDistrictSearch] = useState("");
-  const debouncedSubDistrictSearch = useDebounce(subDistrictSearch, 500);
+  const [village_idSearch, setSubDistrictSearch] = useState("");
+  const debouncedSubDistrictSearch = useDebounce(village_idSearch, 500);
   const { data: kelurahanData, isLoading: isKelurahanLoading } =
     useGetKelurahanListQuery(
       {
         page: 1,
         paginate: 100,
         search: debouncedSubDistrictSearch,
-        district_id: formData.district,
+        district_id: formData.district_id,
       },
-      { skip: !formData.city || debouncedSubDistrictSearch.length < 2 }
+      { skip: !formData.regency_id || debouncedSubDistrictSearch.length < 2 }
     );
   const filteredSubDistrict = useMemo(() => {
     if (!kelurahanData?.data) return [];
-    return kelurahanData.data.filter((district) => {
-      return district.name
+    return kelurahanData.data.filter((district_id) => {
+      return district_id.name
         .toLocaleLowerCase()
         .includes(debouncedSubDistrictSearch.toLowerCase());
     });
@@ -210,7 +198,7 @@ export default function RegisterForm() {
   const handleKtpUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setFormData({ ...formData, ktpPhoto: file });
+      setFormData({ ...formData, upload_ktp: file });
       const reader = new FileReader();
       reader.onloadend = () => {
         setKtpPreview(reader.result as string);
@@ -219,46 +207,110 @@ export default function RegisterForm() {
     }
   };
 
+  const handleFotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setFormData({ ...formData, upload_foto: file });
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFotoPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
+
+    try {
+      // validasi minimal
+      if (!formData.name || !formData.email || !formData.phone || !formData.ktp)
+        throw new Error("Nama, Email, Telepon, dan KTP wajib diisi");
+      if (!formData.gender || !["M", "F"].includes(formData.gender as string))
+        throw new Error("Gender wajib diisi (M/F)");
+
+      if (!formData.password || formData.password.trim().length < 8)
+        throw new Error("Password minimal 8 karakter");
+      if (formData.password !== formData.password_confirmation)
+        throw new Error("Konfirmasi password tidak cocok");
+
+      const fd = new FormData();
+      
+      fd.append("name", formData.name as string);
+      fd.append("email", formData.email as string);
+      fd.append("phone", formData.phone as string);
+      fd.append("address", formData.address ?? "");
+      fd.append("gender", formData.gender as string);
+      fd.append("birth_date", formData.birth_date ?? "");
+      fd.append("birth_place", formData.birth_place ?? "");
+      fd.append("status", String(formData.status));
+      fd.append("ktp", formData.ktp ?? "");
+      if (formData.province_id) fd.append("province_id", formData.province_id);
+      if (formData.regency_id) fd.append("regency_id", formData.regency_id);
+      if (formData.district_id) fd.append("district_id", formData.district_id);
+      if (formData.village_id) fd.append("village_id", formData.village_id);
+      // Pengecekan agar nilai 0 (nol) tetap dikirim
+      if (formData.rt !== undefined && formData.rt !== null) fd.append("rt", String(formData.rt));
+      if (formData.rw !== undefined && formData.rw !== null) fd.append("rw", String(formData.rw));
+      
+      if (formData.religion) fd.append("religion", formData.religion);
+      if (formData.marital_status) fd.append("marital_status", formData.marital_status);
+      if (formData.occupation) fd.append("occupation", formData.occupation);
+      if (formData.last_education) fd.append("last_education", formData.last_education);
+      if (formData.phone_home) fd.append("phone_home", formData.phone_home);
+      if (formData.phone_office) fd.append("phone_office", formData.phone_office);
+      if (formData.phone_faksimili)
+        fd.append("phone_faksimili", formData.phone_faksimili);
+      if (formData.facebook) fd.append("facebook", formData.facebook);
+      if (formData.instagram) fd.append("instagram", formData.instagram);
+      if (formData.twitter) fd.append("twitter", formData.twitter);
+      if (formData.whatsapp) fd.append("whatsapp", formData.whatsapp);
+      if (formData.tiktok) fd.append("tiktok", formData.tiktok);
+      if (formData.path) fd.append("path", formData.path);
+      
+      fd.append("password", formData.password);
+      fd.append("password_confirmation", formData.password_confirmation);
+      
+      await createAnggota(fd).unwrap();
+      Swal.fire("Sukses", "Daftar anggota berhasil", "success");
+      setIsLoading(true);
+
+      setTimeout(() => {
+        setIsLoading(false);
+        router.push("/anggota/login");
+      }, 1500);
+    } catch (err) {
+      const msg =
+        err instanceof Error ? err.message : "Terjadi kesalahan saat menyimpan";
+      Swal.fire("Gagal", msg, "error");
+      console.error(err);
+    }
     e.preventDefault();
 
-    if (formData.password !== formData.confirmPassword) {
-      alert("Password dan konfirmasi password tidak cocok!");
-      return;
-    }
-
-    setIsLoading(true);
-
-    // Simulate registration
-    setTimeout(() => {
-      setIsLoading(false);
-      router.push("/login");
-    }, 1500);
   };
 
   const handleProvinsiSelect = (provinsi: { id: string; name: string }) => {
     console.log("dijalankan");
-    setFormData((prev) => ({ ...prev, province: provinsi.id }));
+    setFormData((prev) => ({ ...prev, province_id: provinsi.id }));
     setProvinsiSearch(provinsi.name);
-    setOpenSelect({ ...openSelect, province: false });
+    setOpenSelect({ ...openSelect, province_id: false });
   };
 
   const handleKotaSelect = (kota: { id: string; name: string }) => {
-    setFormData((prev) => ({ ...prev, city: kota.id }));
+    setFormData((prev) => ({ ...prev, regency_id: kota.id }));
     setKotaSearch(kota.name);
-    setOpenSelect({ ...openSelect, city: false });
+    setOpenSelect({ ...openSelect, regency_id: false });
   };
 
   const handleKecamatanSelect = (kecamatan: { id: string; name: string }) => {
-    setFormData((prev) => ({ ...prev, district: kecamatan.id }));
+    setFormData((prev) => ({ ...prev, district_id: kecamatan.id }));
     setDistrictSearch(kecamatan.name);
-    setOpenSelect({ ...openSelect, district: false });
+    setOpenSelect({ ...openSelect, district_id: false });
   };
 
   const handleKelurahanSelect = (kelurahan: { id: string; name: string }) => {
-    setFormData((prev) => ({ ...prev, subDistrict: kelurahan.id }));
+    setFormData((prev) => ({ ...prev, village_id: kelurahan.id }));
     setSubDistrictSearch(kelurahan.name);
-    setOpenSelect({ ...openSelect, subDistrict: false });
+    setOpenSelect({ ...openSelect, village_id: false });
   };
 
   useEffect(() => {
@@ -266,49 +318,6 @@ export default function RegisterForm() {
       setFormData((prev) => ({ ...prev, referalCode: referal }));
     }
   }, [referal]);
-
-  // Menutup dropdown saat klik di luar komponen
-  // useEffect(() => {
-  //   function handleClickOutside(event: MouseEvent) {
-  //     if (
-  //       dropdownProvinsiRef.current &&
-  //       !dropdownProvinsiRef.current.contains(event.target as Node)
-  //     ) {
-  //       setOpenSelect({ ...openSelect, province: false });
-  //     }
-  //   }
-  //   document.addEventListener("mousedown", handleClickOutside);
-  //   return () => document.removeEventListener("mousedown", handleClickOutside);
-  //   // eslint-disable-next-line react-hooks/exhaustive-deps
-  // }, [dropdownProvinsiRef]);
-
-  // useEffect(() => {
-  //   function handleClickOutside(event: MouseEvent) {
-  //     if (
-  //       dropdownKotaRef.current &&
-  //       !dropdownKotaRef.current.contains(event.target as Node)
-  //     ) {
-  //       setOpenSelect({ ...openSelect, city: false });
-  //     }
-  //   }
-  //   document.addEventListener("mousedown", handleClickOutside);
-  //   return () => document.removeEventListener("mousedown", handleClickOutside);
-  //   // eslint-disable-next-line react-hooks/exhaustive-deps
-  // }, [dropdownKotaRef]);
-
-  // useEffect(() => {
-  //   function handleClickOutside(event: MouseEvent) {
-  //     if (
-  //       dropdownKecamatanRef.current &&
-  //       !dropdownKecamatanRef.current.contains(event.target as Node)
-  //     ) {
-  //       setOpenSelect({ ...openSelect, district: false });
-  //     }
-  //   }
-  //   document.addEventListener("mousedown", handleClickOutside);
-  //   return () => document.removeEventListener("mousedown", handleClickOutside);
-  //   // eslint-disable-next-line react-hooks/exhaustive-deps
-  // }, [dropdownKecamatanRef]);
 
   return (
     <div className="relative">
@@ -342,16 +351,16 @@ export default function RegisterForm() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="fullName">
+                <Label htmlFor="name">
                   Nama Lengkap <span className="text-destructive">*</span>
                 </Label>
                 <Input
-                  id="fullName"
+                  id="name"
                   type="text"
                   placeholder="Masukkan nama lengkap"
-                  value={formData.fullName}
+                  value={formData.name}
                   onChange={(e) =>
-                    setFormData({ ...formData, fullName: e.target.value })
+                    setFormData({ ...formData, name: e.target.value })
                   }
                   required
                   className="h-11"
@@ -391,19 +400,19 @@ export default function RegisterForm() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword">
+                <Label htmlFor="password_confirmation">
                   Konfirmasi Kata Sandi{" "}
                   <span className="text-destructive">*</span>
                 </Label>
                 <Input
-                  id="confirmPassword"
+                  id="password_confirmation"
                   type="password"
                   placeholder="Ulangi kata sandi"
-                  value={formData.confirmPassword}
+                  value={formData.password_confirmation}
                   onChange={(e) =>
                     setFormData({
                       ...formData,
-                      confirmPassword: e.target.value,
+                      password_confirmation: e.target.value,
                     })
                   }
                   required
@@ -422,7 +431,6 @@ export default function RegisterForm() {
                   onChange={(e) =>
                     setFormData({ ...formData, referalCode: e.target.value })
                   }
-                  required
                   className="h-11"
                 />
               </div>
@@ -438,13 +446,13 @@ export default function RegisterForm() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="ktpPhoto">
+                <Label htmlFor="upload_ktp">
                   Foto KTP <span className="text-destructive">*</span>
                 </Label>
                 <div className="flex flex-col gap-3">
                   <div className="relative">
                     <Input
-                      id="ktpPhoto"
+                      id="upload_ktp"
                       type="file"
                       accept="image/*"
                       onChange={handleKtpUpload}
@@ -455,10 +463,12 @@ export default function RegisterForm() {
                   {ktpPreview && (
                     <div className="relative w-full h-40 rounded-lg overflow-hidden border border-border">
                       <Image
-                        unoptimized
+                        unoptimized // <-- This is correct
                         src={ktpPreview || "/placeholder.svg"}
                         alt="Preview KTP"
-                        className="w-full h-full object-cover"
+                        fill
+                        sizes="100vw"
+                        className="object-cover"
                       />
                     </div>
                   )}
@@ -466,16 +476,46 @@ export default function RegisterForm() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="nik">
+                <Label htmlFor="upload_foto">
+                  Foto Asli <span className="text-destructive">*</span>
+                </Label>
+                <div className="flex flex-col gap-3">
+                  <div className="relative">
+                    <Input
+                      id="upload_foto"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFotoUpload}
+                      required
+                      className="h-11"
+                    />
+                  </div>
+                  {fotoPreview && (
+                    <div className="relative w-full h-40 rounded-lg overflow-hidden border border-border">
+                      <Image
+                        unoptimized // <-- This is correct
+                        src={fotoPreview || "/placeholder.svg"}
+                        alt="Preview Foto"
+                        fill
+                        sizes="100vw"
+                        className="object-cover"
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="ktp">
                   NIK <span className="text-destructive">*</span>
                 </Label>
                 <Input
-                  id="nik"
+                  id="ktp"
                   type="text"
                   placeholder="16 digit NIK"
-                  value={formData.nik}
+                  value={formData.ktp}
                   onChange={(e) =>
-                    setFormData({ ...formData, nik: e.target.value })
+                    setFormData({ ...formData, ktp: e.target.value })
                   }
                   required
                   maxLength={16}
@@ -483,15 +523,15 @@ export default function RegisterForm() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="birthDate">
+                <Label htmlFor="birth_date">
                   Tanggal Lahir <span className="text-destructive">*</span>
                 </Label>
                 <Input
-                  id="birthDate"
+                  id="birth_date"
                   type="date"
-                  value={formData.birthDate}
+                  value={formData.birth_date}
                   onChange={(e) =>
-                    setFormData({ ...formData, birthDate: e.target.value })
+                    setFormData({ ...formData, birth_date: e.target.value })
                   }
                   required
                   className="h-11"
@@ -499,16 +539,16 @@ export default function RegisterForm() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="birthPlace">
+                <Label htmlFor="birth_place">
                   Tempat Lahir <span className="text-destructive">*</span>
                 </Label>
                 <Input
-                  id="birthPlace"
+                  id="birth_place"
                   type="text"
                   placeholder="Kota tempat lahir"
-                  value={formData.birthPlace}
+                  value={formData.birth_place}
                   onChange={(e) =>
-                    setFormData({ ...formData, birthPlace: e.target.value })
+                    setFormData({ ...formData, birth_place: e.target.value })
                   }
                   required
                   className="h-11"
@@ -540,13 +580,13 @@ export default function RegisterForm() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="maritalStatus">
+                <Label htmlFor="marital_status">
                   Status Menikah <span className="text-destructive">*</span>
                 </Label>
                 <Select
-                  value={formData.maritalStatus}
+                  value={formData.marital_status}
                   onValueChange={(value) =>
-                    setFormData({ ...formData, maritalStatus: value })
+                    setFormData({ ...formData, marital_status: value })
                   }
                   required
                 >
@@ -554,7 +594,7 @@ export default function RegisterForm() {
                     <SelectValue placeholder="Pilih status" />
                   </SelectTrigger>
                   <SelectContent>
-                    {maritalStatuses.map((status) => (
+                    {marital_statuses.map((status) => (
                       <SelectItem key={status} value={status}>
                         {status}
                       </SelectItem>
@@ -581,14 +621,14 @@ export default function RegisterForm() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="education">
+                <Label htmlFor="last_education">
                   Pendidikan Terakhir{" "}
                   <span className="text-destructive">*</span>
                 </Label>
                 <Select
-                  value={formData.education}
+                  value={formData.last_education}
                   onValueChange={(value) =>
-                    setFormData({ ...formData, education: value })
+                    setFormData({ ...formData, last_education: value })
                   }
                   required
                 >
@@ -596,7 +636,7 @@ export default function RegisterForm() {
                     <SelectValue placeholder="Pilih pendidikan" />
                   </SelectTrigger>
                   <SelectContent>
-                    {educationLevels.map((level) => (
+                    {last_educationLevels.map((level) => (
                       <SelectItem key={level} value={level}>
                         {level}
                       </SelectItem>
@@ -614,18 +654,18 @@ export default function RegisterForm() {
                     value={provinsiSearch}
                     onChange={(e) => {
                       setProvinsiSearch(e.target.value);
-                      setOpenSelect({ ...openSelect, province: true });
-                      if (formData.province) {
-                        setFormData((prev) => ({ ...prev, province: "" }));
+                      setOpenSelect({ ...openSelect, province_id: true });
+                      if (formData.province_id) {
+                        setFormData((prev) => ({ ...prev, province_id: "" }));
                       }
                     }}
                     onFocus={() => {
-                      setOpenSelect({ ...openSelect, province: true });
+                      setOpenSelect({ ...openSelect, province_id: true });
                     }}
                     required
                     autoComplete="off"
                   />
-                  {openSelect.province && (
+                  {openSelect.province_id && (
                     <div className="absolute z-10 w-full mt-1 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-md shadow-lg max-h-60 overflow-y-auto">
                       {isProvinsiLoading ? (
                         <div className="flex items-center justify-center p-4">
@@ -659,26 +699,26 @@ export default function RegisterForm() {
               </div>
 
               <div className="space-y-2" ref={dropdownKotaRef}>
-                <Label htmlFor="city">Kabupaten/Kota</Label>
+                <Label htmlFor="regency_id">Kabupaten/Kota</Label>
                 <div className="relative">
                   <Input
-                    id="city"
+                    id="regency_id"
                     placeholder="Ketik min 2 huruf untuk mencari kabupaten/kota..."
                     value={kotaSearch}
                     onChange={(e) => {
                       setKotaSearch(e.target.value);
-                      setOpenSelect({ ...openSelect, city: true });
-                      if (formData.city) {
-                        setFormData((prev) => ({ ...prev, city: "" }));
+                      setOpenSelect({ ...openSelect, regency_id: true });
+                      if (formData.regency_id) {
+                        setFormData((prev) => ({ ...prev, regency_id: "" }));
                       }
                     }}
                     onFocus={() => {
-                      setOpenSelect({ ...openSelect, city: true });
+                      setOpenSelect({ ...openSelect, regency_id: true });
                     }}
                     required
                     autoComplete="off"
                   />
-                  {openSelect.city && (
+                  {openSelect.regency_id && (
                     <div className="absolute z-10 w-full mt-1 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-md shadow-lg max-h-60 overflow-y-auto">
                       {isKotaLoading ? (
                         <div className="flex items-center justify-center p-4">
@@ -710,32 +750,32 @@ export default function RegisterForm() {
               </div>
 
               <div className="space-y-2" ref={dropdownKecamatanRef}>
-                <Label htmlFor="district">Kecamatan</Label>
+                <Label htmlFor="district_id">Kecamatan</Label>
                 <div className="relative">
                   <Input
-                    id="district"
+                    id="district_id"
                     placeholder="Ketik min 2 huruf untuk mencari kecamatan..."
-                    value={districtSearch}
+                    value={district_idSearch}
                     onChange={(e) => {
                       setDistrictSearch(e.target.value);
-                      setOpenSelect({ ...openSelect, district: true });
-                      if (formData.city) {
-                        setFormData((prev) => ({ ...prev, district: "" }));
+                      setOpenSelect({ ...openSelect, district_id: true });
+                      if (formData.regency_id) {
+                        setFormData((prev) => ({ ...prev, district_id: "" }));
                       }
                     }}
                     onFocus={() => {
-                      setOpenSelect({ ...openSelect, district: true });
+                      setOpenSelect({ ...openSelect, district_id: true });
                     }}
                     required
                     autoComplete="off"
                   />
-                  {openSelect.district && (
+                  {openSelect.district_id && (
                     <div className="absolute z-10 w-full mt-1 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-md shadow-lg max-h-60 overflow-y-auto">
                       {isKecamatanLoading ? (
                         <div className="flex items-center justify-center p-4">
                           <Loader2 className="h-5 w-5 animate-spin" />
                         </div>
-                      ) : districtSearch.length < 2 ? (
+                      ) : district_idSearch.length < 2 ? (
                         <p className="text-sm text-gray-500 p-3">
                           Ketik minimal 2 huruf...
                         </p>
@@ -761,32 +801,32 @@ export default function RegisterForm() {
               </div>
 
               <div className="space-y-2" ref={dropdownKelurahanRef}>
-                <Label htmlFor="subDistrict">Kelurahan</Label>
+                <Label htmlFor="village_id">Kelurahan</Label>
                 <div className="relative">
                   <Input
-                    id="subDistrict"
+                    id="village_id"
                     placeholder="Ketik min 2 huruf untuk mencari kelurahan..."
-                    value={subDistrictSearch}
+                    value={village_idSearch}
                     onChange={(e) => {
                       setSubDistrictSearch(e.target.value);
-                      setOpenSelect({ ...openSelect, subDistrict: true });
-                      if (formData.city) {
-                        setFormData((prev) => ({ ...prev, subDistrict: "" }));
+                      setOpenSelect({ ...openSelect, village_id: true });
+                      if (formData.regency_id) {
+                        setFormData((prev) => ({ ...prev, village_id: "" }));
                       }
                     }}
                     onFocus={() => {
-                      setOpenSelect({ ...openSelect, subDistrict: true });
+                      setOpenSelect({ ...openSelect, village_id: true });
                     }}
                     required
                     autoComplete="off"
                   />
-                  {openSelect.subDistrict && (
+                  {openSelect.village_id && (
                     <div className="absolute z-10 w-full mt-1 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-md shadow-lg max-h-60 overflow-y-auto">
                       {isKelurahanLoading ? (
                         <div className="flex items-center justify-center p-4">
                           <Loader2 className="h-5 w-5 animate-spin" />
                         </div>
-                      ) : subDistrictSearch.length < 2 ? (
+                      ) : village_idSearch.length < 2 ? (
                         <p className="text-sm text-gray-500 p-3">
                           Ketik minimal 2 huruf...
                         </p>
@@ -849,15 +889,15 @@ export default function RegisterForm() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="detailAddress">
+                <Label htmlFor="address">
                   Alamat Detail <span className="text-destructive">*</span>
                 </Label>
                 <Textarea
-                  id="detailAddress"
+                  id="address"
                   placeholder="Masukkan alamat lengkap (nama jalan, nomor rumah, dll)"
-                  value={formData.detailAddress}
+                  value={formData.address}
                   onChange={(e) =>
-                    setFormData({ ...formData, detailAddress: e.target.value })
+                    setFormData({ ...formData, address: e.target.value })
                   }
                   required
                   rows={3}
@@ -893,57 +933,57 @@ export default function RegisterForm() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="homePhone">
+                <Label htmlFor="phone_home">
                   Telepon Rumah{" "}
                   <span className="text-muted-foreground text-xs">
                     (Opsional)
                   </span>
                 </Label>
                 <Input
-                  id="homePhone"
+                  id="phone_home"
                   type="tel"
                   placeholder="021xxxxxxxx"
-                  value={formData.homePhone}
+                  value={formData.phone_home}
                   onChange={(e) =>
-                    setFormData({ ...formData, homePhone: e.target.value })
+                    setFormData({ ...formData, phone_home: e.target.value })
                   }
                   className="h-11"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="officePhone">
+                <Label htmlFor="phone_office">
                   Telepon Kantor{" "}
                   <span className="text-muted-foreground text-xs">
                     (Opsional)
                   </span>
                 </Label>
                 <Input
-                  id="officePhone"
+                  id="phone_office"
                   type="tel"
                   placeholder="021xxxxxxxx"
-                  value={formData.officePhone}
+                  value={formData.phone_office}
                   onChange={(e) =>
-                    setFormData({ ...formData, officePhone: e.target.value })
+                    setFormData({ ...formData, phone_office: e.target.value })
                   }
                   className="h-11"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="fax">
+                <Label htmlFor="phone_faksimili">
                   Faksimili{" "}
                   <span className="text-muted-foreground text-xs">
                     (Opsional)
                   </span>
                 </Label>
                 <Input
-                  id="fax"
+                  id="phone_faksimili"
                   type="tel"
                   placeholder="021xxxxxxxx"
-                  value={formData.fax}
+                  value={formData.phone_faksimili}
                   onChange={(e) =>
-                    setFormData({ ...formData, fax: e.target.value })
+                    setFormData({ ...formData, phone_faksimili: e.target.value })
                   }
                   className="h-11"
                 />
