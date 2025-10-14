@@ -3,10 +3,10 @@
 import type React from "react";
 
 import useDebounce from "@/hooks/use-debounce";
-import { useGetProvinsiListQuery } from "@/services/admin/master/provinsi.service";
-import { useGetKotaListQuery } from "@/services/admin/master/kota.service";
-import { useGetKecamatanListQuery } from "@/services/admin/master/kecamatan.service";
-import { useGetKelurahanListQuery } from "@/services/admin/master/kelurahan.service";
+import { useGetProvinsiListQuery } from "@/services/public/provinsi.service";
+import { useGetKotaListQuery } from "@/services/public/kota.service";
+import { useGetKecamatanListQuery } from "@/services/public/kecamatan.service";
+import { useGetKelurahanListQuery } from "@/services/public/kelurahan.service";
 import { useState, useEffect, useRef, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
