@@ -1,4 +1,3 @@
-// components/AuthGate.tsx
 "use client";
 
 import { useEffect } from "react";
@@ -9,7 +8,8 @@ import { getSession } from "next-auth/react";
 const PUBLIC_ALLOW: string[] = [
   "/auth/login",
   "/anggota/login",
-  "/anggota/register", // ✅ tetap bisa diakses
+  "/anggota/register",
+  "/cek-validasi",
   "/api",
   "/_next",
   "/icons",
