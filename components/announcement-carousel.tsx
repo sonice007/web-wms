@@ -15,6 +15,23 @@ const Skeleton: React.FC<{ className?: string }> = ({ className = "" }) => (
   <div className={`animate-pulse bg-muted rounded-md ${className}`} />
 )
 
+function hasDataArray(value: unknown): value is { data: unknown[] } {
+  if (typeof value !== "object" || value === null) return false;
+  const obj = value as Record<string, unknown>;
+  return Array.isArray(obj.data);
+}
+
+function isPengumuman(item: unknown): item is Pengumuman {
+  if (typeof item !== "object" || item === null) return false;
+  const o = item as Record<string, unknown>;
+  const hasId =
+    "id" in o && (typeof o.id === "number" || typeof o.id === "string");
+  const hasTitle = "title" in o && typeof o.title === "string";
+  const hasContent = "content" in o && typeof o.content === "string";
+  // kolom lain (image, created_at, dll) boleh opsional
+  return hasId && hasTitle && hasContent;
+}
+
 export function AnnouncementCarousel() {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [touchStart, setTouchStart] = useState(0)
@@ -33,7 +50,10 @@ export function AnnouncementCarousel() {
   });
 
   // Ekstrak data pengumuman dari respons API. Gunakan array kosong jika data belum tersedia.
-  const announcements: Pengumuman[] = (data as any)?.data || [];
+  const announcements: Pengumuman[] = useMemo(() => {
+    if (!hasDataArray(data)) return [];
+    return data.data.filter(isPengumuman);
+  }, [data]);
 
   // Reset currentIndex ketika data berubah (misalnya, setelah refetch atau pertama kali dimuat)
   useEffect(() => {

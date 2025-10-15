@@ -5,22 +5,26 @@ export const runtime = "nodejs";
 
 function pickSecret(): string {
   const s1 = (process.env.KTA_URL_SECRET ?? "").trim();
-  if (s1) return s1;
-  return (process.env.NEXT_PUBLIC_KTA_URL_SECRET ?? "").trim();
+  return s1 || (process.env.NEXT_PUBLIC_KTA_URL_SECRET ?? "").trim();
 }
 
-export default async function Page({ params }: { params: { token: string } }) {
-  const tokenOrId = params.token;
+type Params = { token: string };
+type PageProps = { params: Promise<Params> };
+
+export default async function Page({ params }: PageProps) {
+  const { token } = await params;
+
   let memberId = "";
 
-  if (/^\d+$/.test(tokenOrId)) {
-    // dukung /cek-validasi/1369
-    memberId = tokenOrId;
+  if (/^\d+$/.test(token)) {
+    // Dukung URL langsung berupa ID numerik: /cek-validasi/1369
+    memberId = token;
   } else {
+    // Token terenkripsi: /cek-validasi/<token>
     try {
       const secret = pickSecret();
       if (!secret) throw new Error("no-secret");
-      memberId = await decryptKtaToken(tokenOrId, secret);
+      memberId = await decryptKtaToken(token, secret);
     } catch {
       return (
         <div className="min-h-[60vh] flex items-center justify-center">
@@ -48,5 +52,5 @@ export default async function Page({ params }: { params: { token: string } }) {
     );
   }
 
-  return <CekValidasiClient memberIdDecrypted={memberId} token={tokenOrId} />;
+  return <CekValidasiClient memberIdDecrypted={memberId} token={token} />;
 }

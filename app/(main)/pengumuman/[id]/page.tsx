@@ -1,127 +1,131 @@
-"use client"
+"use client";
 
-import { Metadata } from "next" // Metadata harus ditangani secara dinamis dengan generateMetadata
-import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Calendar, Share2, Loader2, XCircle } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card";
+import { Calendar, Share2, Loader2, XCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { useParams } from "next/navigation";
+import { useGetPengumumanBySlugQuery } from "@/services/admin/pengumuman.service";
+import { skipToken } from "@reduxjs/toolkit/query";
 
-import {
-  useGetPengumumanBySlugQuery,
-} from "@/services/admin/pengumuman.service";
-
-import { Pengumuman } from "@/types/admin/pengumuman";
-import { usePathname } from "next/navigation"
-
-// --- Helper Functions for Formatting ---
-
-/**
- * Mengubah string tanggal ISO menjadi format "15 Oktober 2025".
- */
-const formatDate = (dateString: string): string => {
+/* helpers */
+const formatDate = (iso: string): string => {
   try {
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) {
-        return dateString;
-    }
-    const options: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long', year: 'numeric' };
-    return date.toLocaleDateString('id-ID', options);
-  } catch (error) {
-    return dateString;
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return iso;
+    return d.toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+  } catch {
+    return iso;
   }
 };
 
-/**
- * Fungsi ini digunakan untuk merender konten HTML yang mungkin mengandung <p>, <br>, dll.
- * Karena kita menggunakan `dangerouslySetInnerHTML`, kita asumsikan konten API aman.
- * Jika Anda ingin membersihkan dan merender setiap baris sebagai paragraf terpisah (seperti kode sebelumnya),
- * Anda harus memastikan konten API hanya mengandung teks atau tag dasar.
- * Saya akan mengembalikan ke logika pemisahan baris untuk keamanan dan konsistensi.
- */
-const renderContent = (content: string) => {
-    // Memisahkan paragraf berdasarkan baris baru ganda
-    return content.split("\n\n").map((paragraph, index) => (
-        <div key={index} className="mb-4 last:mb-0">
-            {/* Merender setiap baris dalam paragraf sebagai teks terpisah untuk menghindari tag HTML bawaan */}
-            {paragraph.split('\n').map((line, lineIndex) => (
-                // Menggunakan dangerouslySetInnerHTML untuk merender tag HTML sederhana (misal: <b>) 
-                // atau cukup render sebagai teks biasa jika content benar-benar murni teks/markdown.
-                // Karena content dari API sebelumnya mengandung tag HTML, kita biarkan saja.
-                <p key={lineIndex} className="text-base text-foreground leading-relaxed text-pretty">
-                    {/* Menggunakan dangerouslySetInnerHTML jika kontennya benar-benar mengandung HTML yang ingin dirender */}
-                    <span dangerouslySetInnerHTML={{ __html: line }} />
-                </p>
-            ))}
-        </div>
-    ));
-};
+const renderContent = (content: string) =>
+  content.split("\n\n").map((p, i) => (
+    <div key={i} className="mb-4 last:mb-0">
+      {p.split("\n").map((line, j) => (
+        <p
+          key={j}
+          className="text-base text-foreground leading-relaxed text-pretty"
+        >
+          <span dangerouslySetInnerHTML={{ __html: line }} />
+        </p>
+      ))}
+    </div>
+  ));
 
-// --- KOMPONEN HALAMAN DINAMIS ---
-// Komponen menerima params dari Next.js
-export default function PengumumanDetailPage({ params }: { params: { id: number } }) {
-  const { id } = params;
+export default function PengumumanDetailPage() {
+  const { id } = useParams<{ id: string }>();
 
-  // Asumsi slug adalah ID numerik
-  const pengumumanId = Number(id);
+  // parse to number; undefined if invalid
+  const numericId = (() => {
+    const raw = Array.isArray(id) ? id[0] : id;
+    const n = Number(raw);
+    return Number.isFinite(n) ? n : undefined;
+  })();
 
-  // Panggil hook API
-  const { data: announcement, isLoading, isError } = useGetPengumumanBySlugQuery(pengumumanId);
+  // ALWAYS call the hook; skip when id invalid/absent
+  const {
+    data: announcement,
+    isLoading,
+    isError,
+  } = useGetPengumumanBySlugQuery(numericId ?? skipToken);
 
-  // --- Penanganan Loading ---
-  if (isLoading) {
+  // Invalid URL (after hook call -> OK for rules-of-hooks)
+  if (!numericId) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-8">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-        <p className="mt-2 text-muted-foreground">Memuat detail pengumuman...</p>
+        <XCircle className="w-12 h-12 text-destructive" />
+        <h1 className="text-xl font-bold mt-4">URL tidak valid</h1>
+        <p className="mt-2 text-muted-foreground text-center">
+          Parameter <code>[id]</code> harus berupa angka.
+        </p>
+        <Button asChild className="mt-6">
+          <Link href="/pengumuman">Kembali ke Daftar Pengumuman</Link>
+        </Button>
       </div>
     );
   }
 
-  // --- Penanganan Error atau Data Tidak Ditemukan ---
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-8">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <p className="mt-2 text-muted-foreground">
+          Memuat detail pengumuman...
+        </p>
+      </div>
+    );
+  }
+
   if (isError || !announcement) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-8">
         <XCircle className="w-12 h-12 text-destructive" />
         <h1 className="text-xl font-bold mt-4">Pengumuman Tidak Ditemukan</h1>
         <p className="mt-2 text-muted-foreground text-center">
-            {isError ? "Terjadi kesalahan saat mengambil data." : `Pengumuman dengan ID "${id}" tidak ada.`}
+          {isError
+            ? "Terjadi kesalahan saat mengambil data."
+            : `Pengumuman dengan ID "${numericId}" tidak ada.`}
         </p>
         <Button asChild className="mt-6">
-            <a href="/pengumuman">Kembali ke Daftar Pengumuman</a>
+          <Link href="/pengumuman">Kembali ke Daftar Pengumuman</Link>
         </Button>
       </div>
     );
   }
-  
-  // Data telah berhasil diambil
-  const formattedDate = formatDate(announcement.date);
-  
-  // --- Render Halaman Detail ---
+
+  const formattedDate = announcement.date ? formatDate(announcement.date) : "";
+
   return (
     <div className="min-h-screen bg-background">
-      {/* Header Gambar */}
       <div
         className="h-64 bg-cover bg-center flex items-end p-8"
-        style={{ backgroundImage: `url(${announcement.image || '/placeholder.svg'})` }}
-      >
-      </div>
-
-
+        style={{
+          backgroundImage: `url(${announcement.image || "/placeholder.svg"})`,
+        }}
+      />
       <div className="p-4 md:p-6 lg:p-8 max-w-4xl mx-auto space-y-6 pb-8">
-        {/* Meta Info */}
         <Card>
           <CardContent className="p-4">
-            <h1 className="text-xl text-black">
-                {announcement.title}
-              </h1>
+            <h1 className="text-xl text-black">{announcement.title}</h1>
             <div className="flex items-center justify-between flex-wrap gap-3">
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                  <Calendar className="w-4 h-4" />
-                  <span>{formattedDate}</span> {/* Tanggal rapih */}
-                </div>
+              <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                <Calendar className="w-4 h-4" />
+                <span>{formattedDate}</span>
               </div>
-              <Button variant="outline" size="sm" onClick={() => navigator.clipboard.writeText(window.location.href)}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  if (typeof window !== "undefined") {
+                    void navigator.clipboard.writeText(window.location.href);
+                  }
+                }}
+              >
                 <Share2 className="w-4 h-4 mr-2" />
                 Bagikan
               </Button>
@@ -129,22 +133,14 @@ export default function PengumumanDetailPage({ params }: { params: { id: number 
           </CardContent>
         </Card>
 
-        {/* Content */}
         <Card>
           <CardContent className="p-6">
             <div className="prose prose-sm max-w-none">
-              {/* Menggunakan fungsi renderContent yang menangani pemformatan baris baru */}
               {renderContent(announcement.content)}
             </div>
           </CardContent>
         </Card>
       </div>
     </div>
-  )
+  );
 }
-
-// Catatan: Fungsi generateMetadata harus dipindahkan ke file terpisah di Next.js 13/14 App Router,
-// atau diubah untuk mengambil data secara async di Server Component. Karena komponen ini adalah
-// "use client", generateMetadata statis harus dihapus atau dimodifikasi agar sesuai dengan App Router. 
-// Saya hapus implementasi generateMetadata statis karena tidak lagi relevan dengan data dinamis.
-// Jika Anda menggunakan Pages Router, Anda bisa mengabaikan komentar ini.
