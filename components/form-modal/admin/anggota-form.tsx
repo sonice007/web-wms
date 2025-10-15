@@ -69,55 +69,7 @@ export default function AnggotaForm({
   };
   // ------------------------------------------------------------------
 
-  const [kotaSearch, setKotaSearch] = useState("");
-  const { data: kotaData, isLoading: isKotaLoading } = useGetKotaListQuery({
-    page: 1,
-    paginate: 100,
-    search: kotaSearch,
-    province_id: form.province_id || "",
-  });
-  const [isDropdownKotaOpen, setDropdownKotaOpen] = useState(false);
-  const dropdownKotaRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    setMounted(true);
-    if (form.regency_id && kotaData?.data) {
-      const selectedKota = kotaData.data.find((p) => p.id === form.regency_id);
-      if (selectedKota) setKotaSearch(selectedKota.name);
-    }
-  }, [form.regency_id, kotaData]);
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (
-        dropdownKotaRef.current &&
-        !dropdownKotaRef.current.contains(event.target as Node)
-      ) {
-        setDropdownKotaOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [dropdownKotaRef]);
-
-  const filteredKota = useMemo(() => {
-    if (!kotaData?.data || kotaSearch.length < 2) return [];
-    return kotaData.data.filter((kota) =>
-      kota.name.toLowerCase().includes(kotaSearch.toLowerCase())
-    );
-  }, [kotaSearch, kotaData]);
-
-  const handleKotaSelect = (kota: { id: string; name: string }) => {
-    setForm({
-      ...form,
-      regency_id: kota.id,
-      district_id: undefined,
-      village_id: undefined,
-    });
-    setKotaSearch(kota.name);
-    setDropdownKotaOpen(false);
-  };
-
+  // provinsi
   const [provinsiSearch, setProvinsiSearch] = useState("");
   const { data: provinsiData, isLoading: isProvinsiLoading } =
     useGetProvinsiListQuery({
@@ -173,6 +125,57 @@ export default function AnggotaForm({
     setKelurahanSearch("");
   };
 
+  // kota
+  const [kotaSearch, setKotaSearch] = useState("");
+  const { data: kotaData, isLoading: isKotaLoading } = useGetKotaListQuery({
+    page: 1,
+    paginate: 100,
+    search: kotaSearch,
+    province_id: form.province_id || "",
+  });
+  const [isDropdownKotaOpen, setDropdownKotaOpen] = useState(false);
+  const dropdownKotaRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setMounted(true);
+    if (form.regency_id && kotaData?.data) {
+      const selectedKota = kotaData.data.find((p) => p.id === form.regency_id);
+      if (selectedKota) setKotaSearch(selectedKota.name);
+    }
+  }, [form.regency_id, kotaData]);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        dropdownKotaRef.current &&
+        !dropdownKotaRef.current.contains(event.target as Node)
+      ) {
+        setDropdownKotaOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [dropdownKotaRef]);
+
+  const filteredKota = useMemo(() => {
+    if (!kotaData?.data || kotaSearch.length < 2) return [];
+    return kotaData.data.filter((kota) =>
+      kota.name.toLowerCase().includes(kotaSearch.toLowerCase())
+    );
+  }, [kotaSearch, kotaData]);
+
+  const handleKotaSelect = (kota: { id: string; name: string }) => {
+    setForm({
+      ...form,
+      regency_id: kota.id,
+      district_id: undefined,
+      village_id: undefined,
+    });
+    setKotaSearch(kota.name);
+    setDropdownKotaOpen(false);
+  };
+
+  // kecamatan
   const [kecamatanSearch, setKecamatanSearch] = useState("");
   const { data: kecamatanData, isLoading: isKecamatanLoading } =
     useGetKecamatanListQuery({

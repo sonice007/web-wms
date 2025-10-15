@@ -11,13 +11,18 @@ export const anggotaApi = apiSlice.injectEndpoints({
         current_page: number;
         total: number;
         per_page: number;
+        province_id?: string;
+        regency_id?: string;
+        district_id?: string;
+        village_id?: string;
+        level_id?: number;
       },
-      { page: number; paginate: number; status?: number }
+      { page: number; paginate: number; status?: number; province_id?: string; regency_id?: string; district_id?: string; village_id?: string; level_id?: number; }
     >({
-      query: ({ page, paginate, status }) => ({
+      query: ({ page, paginate, status, province_id, regency_id, district_id, village_id, level_id }) => ({
         url: `/anggota/anggotas`,
         method: "GET",
-        params: { page, paginate, ...(status && { status }) },
+        params: { page, paginate, ...(status && { status }), ...(province_id && { province_id }), ...(regency_id && { regency_id }), ...(district_id && { district_id }), ...(village_id && { village_id }), ...(level_id && { level_id }) },
       }),
       transformResponse: (response: {
         code: number;
