@@ -3,11 +3,10 @@
 import { PrinterIcon, IdCard } from "lucide-react";
 import { useRef } from "react";
 import { KTACard } from "@/components/kta-card";
-import KTACardBack from "@/components/kta-card-back";
+import KTACardBack from "@/components/kta-card-back-admin";
 import { Button } from "@/components/ui/button";
 
 export default function KtaPage() {
-  const memberId = "KTA-001234";
   const printRef = useRef<HTMLDivElement | null>(null);
 
   const handlePrint = () => {
@@ -37,17 +36,13 @@ export default function KtaPage() {
             <KTACard />
           </div>
           <div className="flex items-center justify-center">
-            <KTACardBack memberId={memberId} />
+            {/* Tanpa prop: QR otomatis dari session.user.anggota.reference */}
+            <KTACardBack />
           </div>
         </div>
 
         <div>
-          <Button
-            className="w-full no-print"
-            onClick={handlePrint}
-            size="lg"
-            variant="default"
-          >
+          <Button className="w-full no-print" onClick={handlePrint} size="lg">
             <PrinterIcon />
             <span> Print / Download PDF</span>
           </Button>

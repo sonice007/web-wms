@@ -8,49 +8,33 @@ function pickSecret(): string {
   return s1 || (process.env.NEXT_PUBLIC_KTA_URL_SECRET ?? "").trim();
 }
 
-type Params = { token: string };
-type PageProps = { params: Promise<Params> };
+type PageProps = { params: { token: string } };
 
 export default async function Page({ params }: PageProps) {
-  const { token } = await params;
+  const { token } = params;
 
-  let memberId = "";
-
-  if (/^\d+$/.test(token)) {
-    // Dukung URL langsung berupa ID numerik: /cek-validasi/1369
-    memberId = token;
-  } else {
-    // Token terenkripsi: /cek-validasi/<token>
-    try {
-      const secret = pickSecret();
-      if (!secret) throw new Error("no-secret");
-      memberId = await decryptKtaToken(token, secret);
-    } catch {
-      return (
-        <div className="min-h-[60vh] flex items-center justify-center">
-          <div className="text-center space-y-2">
-            <h1 className="text-xl font-semibold">Token tidak valid</h1>
-            <p className="text-sm text-muted-foreground">
-              Pastikan URL yang Anda buka benar atau belum kedaluwarsa.
-            </p>
-          </div>
-        </div>
-      );
-    }
+  // Coba dekripsi → reference; kalau gagal, pakai token apa adanya (mode non-enkripsi)
+  let memberRef = "";
+  try {
+    const secret = pickSecret();
+    if (!secret) throw new Error("no-secret");
+    memberRef = await decryptKtaToken(token, secret);
+  } catch {
+    memberRef = token;
   }
 
-  if (!/^\d+$/.test(memberId)) {
+  if (!memberRef) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
         <div className="text-center space-y-2">
           <h1 className="text-xl font-semibold">Token tidak valid</h1>
           <p className="text-sm text-muted-foreground">
-            Hasil dekripsi bukan ID numerik.
+            Pastikan URL yang Anda buka benar atau belum kedaluwarsa.
           </p>
         </div>
       </div>
     );
   }
 
-  return <CekValidasiClient memberIdDecrypted={memberId} token={token} />;
+  return <CekValidasiClient memberRef={memberRef} token={token} />;
 }

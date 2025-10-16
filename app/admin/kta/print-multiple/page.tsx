@@ -221,7 +221,10 @@ function BatchKtaContent() {
               <KTACard memberId={m.id} onClickRoute="/admin/kta/[id]" />
             </div>
             <div className="kta-card-frame">
-              <KTACardBack memberId={String(m.id)} />
+              <KTACardBack
+                reference={m.reference ?? undefined}
+                userId={m.id}
+              />
             </div>
           </section>
         ))}

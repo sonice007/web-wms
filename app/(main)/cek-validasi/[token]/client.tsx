@@ -20,28 +20,20 @@ function pickField(obj: unknown, key: string): string | undefined {
   return typeof v === "string" && v.trim() ? v : undefined;
 }
 
-export default function CekValidasiClient({
-  memberIdDecrypted,
-  token,
-}: {
-  memberIdDecrypted: string;
-  token: string;
-}) {
+type Props = { memberRef: string; token: string };
+
+export default function CekValidasiClient({ memberRef, token }: Props) {
   const printRef = useRef<HTMLDivElement | null>(null);
 
-  const numericId = useMemo(
-    () =>
-      /^\d+$/.test(memberIdDecrypted) ? Number(memberIdDecrypted) : undefined,
-    [memberIdDecrypted]
-  );
-
-  const { data } = useGetAnggotaByReferenceQuery(numericId?.toString() ?? "", {
-    skip: !numericId,
+  // Ambil data anggota berdasar reference (string)
+  const { data } = useGetAnggotaByReferenceQuery(memberRef, {
+    skip: memberRef.trim().length === 0,
     refetchOnMountOrArgChange: true,
     refetchOnFocus: false,
     refetchOnReconnect: false,
   });
 
+  // Override untuk menyensor nomor di kartu depan
   const override:
     | Partial<
         Anggota & {
@@ -56,12 +48,12 @@ export default function CekValidasiClient({
     if (!data) return undefined;
 
     const original =
+      pickField(data, "reference") ??
       pickField(data, "kta_number") ??
       pickField(data, "member_id") ??
       pickField(data, "memberId") ??
       pickField(data, "card_number") ??
-      pickField(data, "reference") ??
-      memberIdDecrypted;
+      memberRef;
 
     const masked = maskMemberNumber(original, 5);
 
@@ -73,17 +65,17 @@ export default function CekValidasiClient({
       card_number: masked,
       reference: masked,
     };
-  }, [data, memberIdDecrypted]);
+  }, [data, memberRef]);
 
   return (
     <div ref={printRef} className="space-y-6 py-10">
       <div className="flex items-center justify-center">
-        {/* gunakan override agar nomor tersensor */}
         <KTACard dataOverride={override} />
       </div>
+
       <div className="flex items-center justify-center">
-        {/* kirim ID asli agar komponen back membentuk QR /cek-validasi/<token> */}
-        <KTACardBack memberId={memberIdDecrypted} />
+        {/* kirim TOKEN agar QR belakang menunjuk /cek-validasi/<token> */}
+        <KTACardBack qrPayload={token} />
       </div>
     </div>
   );

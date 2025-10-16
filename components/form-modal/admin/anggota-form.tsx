@@ -355,7 +355,10 @@ export default function AnggotaForm({
           {readonly && form.id && (
             <>
               <KTACard memberId={form.id} onClickRoute="/admin/kta" />
-              <KTACardBack memberId={String(form.id)} />
+              <KTACardBack
+                reference={form.reference ?? undefined}
+                userId={form.id}
+              />
             </>
           )}
 

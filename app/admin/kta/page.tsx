@@ -134,7 +134,14 @@ function KtaPageContent() {
           </div>
           {/* Belakang */}
           <div className="kta-card-frame">
-            <KTACardBack memberId={backId} />
+            <KTACardBack
+              userId={numericId}
+              reference={
+                typeof backId === "string" && !/^\d+$/.test(backId)
+                  ? backId
+                  : undefined
+              }
+            />
           </div>
         </div>
 

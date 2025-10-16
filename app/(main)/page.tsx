@@ -6,9 +6,6 @@ import { TaskCard } from "@/components/task-card";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Megaphone, Briefcase, LayoutGrid } from "lucide-react";
 import Link from "next/link";
-import { IconBell } from "@tabler/icons-react";
-import { useGetNotificationsQuery } from "@/services/notification.service";
-import { useRouter } from "next/navigation";
 
 const popularTasks = [
   {
@@ -63,21 +60,6 @@ const popularTasks = [
 ];
 
 export default function HomePage() {
-  const { data } = useGetNotificationsQuery(
-    { page: 1, paginate: 10 },
-    {
-      pollingInterval: 300000,
-      refetchOnFocus: true,
-      refetchOnMountOrArgChange: true,
-    }
-  );
-  const notifications = data?.data || [];
-  const hasUnread = notifications.some((n) => !n.read_at);
-
-  const route = useRouter();
-  const handleNotif = () => {
-    route.push("/notification");
-  };
 
   return (
     <div className="space-y-6 p-4 safe-area-top">
@@ -95,13 +77,6 @@ export default function HomePage() {
               Kelola keanggotaan Anda dengan mudah
             </p>
           </div>
-        </div>
-
-        <div className="relative cursor-pointer hover:bg-gray-400 rounded-lg p-2 transition-all border border-slate-200" onClick={handleNotif}>
-          <IconBell className="w-6 h-6" />
-          {hasUnread && (
-            <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-500 ring-2 ring-white" />
-          )}
         </div>
       </div>
 

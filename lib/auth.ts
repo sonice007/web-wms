@@ -1,3 +1,4 @@
+// auth.ts
 import { AuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import type { User } from "@/types/user";
@@ -7,7 +8,6 @@ export const authOptions: AuthOptions = {
     strategy: "jwt",
     maxAge: 60 * 60 * 24, // 1 day
   },
-  // debug: true,
   pages: {
     signIn: "/auth/login",
   },
@@ -20,14 +20,12 @@ export const authOptions: AuthOptions = {
       authorize: async (credentials) => {
         if (!credentials) return null;
 
-        // Step 1: Login untuk mendapatkan token
+        // 1) Login -> token
         const loginRes = await fetch(
           `${process.env.NEXT_PUBLIC_API_BASE_URL}/login`,
           {
             method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               email: credentials.email,
               password: credentials.password,
@@ -37,10 +35,9 @@ export const authOptions: AuthOptions = {
 
         const loginData = await loginRes.json();
         if (!loginRes.ok || !loginData?.data?.token) return null;
+        const token: string = loginData.data.token;
 
-        const token = loginData.data.token;
-
-        // Step 2: Ambil data user dari /me
+        // 2) /me
         const meRes = await fetch(
           `${process.env.NEXT_PUBLIC_API_BASE_URL}/me?forceRefresh=1`,
           {
@@ -53,18 +50,22 @@ export const authOptions: AuthOptions = {
         );
 
         const meData = await meRes.json();
-        const user: User = meData?.data;
-
+        const user: User | undefined = meData?.data;
         if (!meRes.ok || !user) return null;
 
+        // Kembalikan tepat sesuai /me + token
         return {
           id: user.id,
-          email: user.email,
           name: user.name,
-          phone: user.phone,
-          token: token,
-          roles: user.roles || [],
-          shop: user.shop,
+          email: user.email,
+          token,
+          email_verified_at: user.email_verified_at,
+          created_at: user.created_at,
+          updated_at: user.updated_at,
+          anggota: user.anggota,
+          roles: user.roles,
+          refferal: user.refferal,
+          referrer: user.referrer,
         };
       },
     }),
@@ -72,22 +73,47 @@ export const authOptions: AuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.id = user.id;
-        token.email = user.email;
-        token.name = user.name;
-        token.phone = user.phone;
-        token.token = user.token;
-        token.roles = user.roles;
-        token.shop = user.shop;
+        token.id = user.id as number;
+        token.name = user.name as string;
+        token.email = user.email as string;
+        token.token = (user as unknown as { token: string }).token;
+        token.email_verified_at = (
+          user as unknown as { email_verified_at: string | null }
+        ).email_verified_at;
+        token.created_at = (
+          user as unknown as { created_at: string }
+        ).created_at;
+        token.updated_at = (
+          user as unknown as { updated_at: string }
+        ).updated_at;
+        token.anggota = (
+          user as unknown as { anggota: User["anggota"] }
+        ).anggota;
+        token.roles = (user as unknown as { roles: User["roles"] }).roles;
+        token.refferal = (
+          user as unknown as { refferal: User["refferal"] }
+        ).refferal;
+        token.referrer = (
+          user as unknown as { referrer: User["referrer"] }
+        ).referrer;
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.id as number;
+        session.user.name = token.name as string;
+        session.user.email = token.email as string;
         session.user.token = token.token as string;
+        session.user.email_verified_at = token.email_verified_at as
+          | string
+          | null;
+        session.user.created_at = token.created_at as string;
+        session.user.updated_at = token.updated_at as string;
+        session.user.anggota = token.anggota as User["anggota"];
         session.user.roles = token.roles as User["roles"];
-        session.user.shop = token.shop as User["shop"];
+        session.user.refferal = token.refferal as User["refferal"];
+        session.user.referrer = token.referrer as User["referrer"];
       }
       return session;
     },
