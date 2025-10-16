@@ -311,7 +311,6 @@ export default function AnggotaPage() {
   // NEW: Gunakan variabel isFilterLocked dan profileMeLevel untuk disabled
   const isKotaDisabled = Number(profileMeLevel) >= 3 && isFilterLocked;
 
-
   useEffect(() => {
     if (filterRegion.regency_id && kotaData?.data) {
       const selectedKota = kotaData.data.find(
@@ -974,11 +973,12 @@ export default function AnggotaPage() {
               Generate KTA
             </Button>
 
-            {openModal && (
-              <Button onClick={openModal} className="h-10 w-full sm:w-auto">
-                <Plus /> Tambah Anggota
-              </Button>
-            )}
+            <Button
+              onClick={() => router.push("/admin/keanggotaan/add-data")}
+              className="h-10 w-full sm:w-auto"
+            >
+              <Plus /> Tambah Anggota
+            </Button>
           </div>
         </div>
       </div>
