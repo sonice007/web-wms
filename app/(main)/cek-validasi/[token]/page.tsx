@@ -8,18 +8,19 @@ function pickSecret(): string {
   return s1 || (process.env.NEXT_PUBLIC_KTA_URL_SECRET ?? "").trim();
 }
 
-type PageProps = { params: { token: string } };
+type Params = { token: string };
+type PageProps = { params: Promise<Params> };
 
 export default async function Page({ params }: PageProps) {
-  const { token } = params;
+  const { token } = await params;
 
-  // Coba dekripsi → reference; kalau gagal, pakai token apa adanya (mode non-enkripsi)
   let memberRef = "";
   try {
     const secret = pickSecret();
     if (!secret) throw new Error("no-secret");
     memberRef = await decryptKtaToken(token, secret);
   } catch {
+    // fallback non-enkripsi: pakai token apa adanya
     memberRef = token;
   }
 
