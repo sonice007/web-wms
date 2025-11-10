@@ -37,7 +37,8 @@ export default function TeamSection() {
           className="text-center mb-16"
         >
           <h2 className="text-4xl lg:text-5xl font-bold text-[#6B6B6B] mb-4">
-            Pengurus dan Tim <span className="text-[#E53935]">Digital KTA</span>
+            Pengurus dan Tim{" "}
+            <span className="text-[#E53935]">Warehouse MS</span>
           </h2>
           <p className="text-lg text-[#6B6B6B] max-w-2xl mx-auto">
             Tim profesional berpengalaman yang berdedikasi untuk melayani

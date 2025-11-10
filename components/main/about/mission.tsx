@@ -15,7 +15,7 @@ export default function Mission() {
             Visi & <span className="text-[#E53935]">Misi</span>
           </h2>
           <p className="text-lg text-[#6B6B6B] leading-relaxed mb-6">
-            Digital KTA hadir untuk mewujudkan kemandirian dan kesejahteraan
+            Warehouse MS hadir untuk mewujudkan kemandirian dan kesejahteraan
             bagi seluruh anggota melalui ekosistem ekonomi yang terintegrasi dan
             adil.
           </p>

@@ -180,7 +180,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
 
   return (
     <div className="w-full min-h-screen grid grid-cols-1 lg:grid-cols-2 bg-gradient-to-br from-red-50 to-white">
-      {/* Left Pane - Digital KTA Theme with Carousel */}
+      {/* Left Pane - Warehouse MS Theme with Carousel */}
       <div className="relative hidden lg:flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 z-0" ref={emblaRef}>
           <div className="embla__container flex h-full">
@@ -191,7 +191,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
               >
                 <Image
                   src={src}
-                  alt={`Digital KTA ${index + 1}`}
+                  alt={`Warehouse MS ${index + 1}`}
                   fill
                   style={{ objectFit: "cover" }}
                   quality={100}
@@ -350,14 +350,14 @@ export default function AuthForm({ mode }: AuthFormProps) {
               <div className="flex items-center gap-1">
                 <Image
                   src="/logo.webp"
-                  alt="Digital KTA Logo"
+                  alt="Warehouse MS Logo"
                   width={50}
                   height={50}
                   className="flex-shrink-0 object-contain"
                 />
                 <div>
                   <h2 className="text-lg font-semibold text-gray-800">
-                    Digital KTA
+                    Warehouse MS
                   </h2>
                   <p className="text-xs text-gray-600 mt-[-5px]">
                     Keanggotaan #AntiRibet
@@ -369,7 +369,9 @@ export default function AuthForm({ mode }: AuthFormProps) {
             <div className="w-16 h-1 bg-gradient-to-r from-red-600 to-red-400 mx-auto mb-4"></div>
 
             <p className="text-base font-medium text-gray-700 max-w-sm mx-auto leading-relaxed">
-              Kartu Anggota Anda, kini di dalam ponsel. Akses semua identitas dan manfaat keanggotaan Anda dengan praktis, aman, dan modern. Ucapkan selamat tinggal pada kartu fisik!
+              Kartu Anggota Anda, kini di dalam ponsel. Akses semua identitas
+              dan manfaat keanggotaan Anda dengan praktis, aman, dan modern.
+              Ucapkan selamat tinggal pada kartu fisik!
             </p>
 
             <div className="mt-6 flex justify-center space-x-4 text-sm text-gray-600">
@@ -379,7 +381,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
               </div>
               <div className="flex items-center">
                 <div className="w-2 h-2 bg-red-500 rounded-full mr-2"></div>
-                Digital KTA
+                Warehouse MS
               </div>
             </div>
           </motion.div>
@@ -424,14 +426,14 @@ export default function AuthForm({ mode }: AuthFormProps) {
             <div className="flex items-center justify-center mb-4 gap-1">
               <Image
                 src="/logo.webp"
-                alt="Digital KTA Logo"
+                alt="Warehouse MS Logo"
                 width={50}
                 height={50}
                 className="flex-shrink-0 object-contain"
               />
               <div>
                 <h2 className="text-lg font-semibold text-gray-800">
-                  Digital KTA
+                  Warehouse MS
                 </h2>
                 <p className="text-xs text-gray-600 mt-[-5px]">
                   Keanggotaan #AntiRibet

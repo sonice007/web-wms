@@ -6,7 +6,7 @@ const story = [
   {
     year: "2008",
     title: "Pendirian Koperasi",
-    desc: "Digital KTA didirikan dengan tujuan utama untuk meningkatkan kesejahteraan ekonomi anggota melalui semangat gotong royong dan kemandirian.",
+    desc: "Warehouse MS didirikan dengan tujuan utama untuk meningkatkan kesejahteraan ekonomi anggota melalui semangat gotong royong dan kemandirian.",
     icon: <Handshake className="w-6 h-6 text-white" />,
   },
   {
@@ -35,7 +35,7 @@ export default function BrandStory() {
           className="text-center mb-16"
         >
           <h2 className="text-4xl lg:text-5xl font-bold text-[#6B6B6B] mb-4">
-            Perjalanan <span className="text-[#E53935]">Digital KTA</span>
+            Perjalanan <span className="text-[#E53935]">Warehouse MS</span>
           </h2>
           <p className="text-lg text-[#6B6B6B] max-w-2xl mx-auto">
             Dari awal berdiri hingga kini, kami terus konsisten menghadirkan

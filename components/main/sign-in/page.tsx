@@ -68,7 +68,7 @@ const TERMS_CONTENT = {
     <>
       <h3>1. Penerimaan Persyaratan</h3>
       <p>
-        Dengan mendaftar dan menggunakan layanan Digital KTA (Layanan), Anda
+        Dengan mendaftar dan menggunakan layanan Warehouse MS (Layanan), Anda
         setuju untuk terikat oleh Syarat dan Ketentuan ini (Syarat). Jika Anda
         tidak setuju dengan Syarat ini, Anda tidak boleh menggunakan Layanan.
       </p>
@@ -666,13 +666,13 @@ export default function LoginPage() {
               <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center">
                 <Image
                   src="/logo.webp"
-                  alt="Digital KTA"
+                  alt="Warehouse MS"
                   width={50}
                   height={50}
                 />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-white">Digital KTA</h1>
+                <h1 className="text-2xl font-bold text-white">Warehouse MS</h1>
                 <p className="text-white/80 text-sm">
                   Mandiri, Sejahtera, & Berdaya
                 </p>
@@ -683,7 +683,7 @@ export default function LoginPage() {
               <h2 className="text-3xl lg:text-4xl font-bold mb-4 leading-tight text-white">
                 {isLogin
                   ? "Selamat Datang Kembali!"
-                  : "Bergabung dengan Digital KTA"}
+                  : "Bergabung dengan Warehouse MS"}
               </h2>
               <p className="text-white/80 text-lg">
                 {isLogin

@@ -23,7 +23,7 @@ const Hero = () => {
               <div className="inline-flex items-center gap-2 bg-[#E53935]/10 px-4 py-2 rounded-full">
                 <Sparkles className="w-4 h-4 text-[#E53935]" />
                 <span className="text-sm font-medium text-[#E53935]">
-                  Tentang Digital KTA
+                  Tentang Warehouse MS
                 </span>
               </div>
 
@@ -70,7 +70,7 @@ const Hero = () => {
               <div className="relative w-full h-[600px] rounded-3xl overflow-hidden shadow-2xl">
                 <Image
                   src="/hero-tentang-kami.webp"
-                  alt="Digital KTA Anggota"
+                  alt="Warehouse MS Anggota"
                   fill
                   className="object-cover"
                   priority

@@ -1,6 +1,6 @@
 {
-  "name": "Digital KTA - Digitalisasi Manajemen Keanggotaan",
-  "short_name": "Digital KTA",
+  "name": "Warehouse MS - Digitalisasi Manajemen Keanggotaan",
+  "short_name": "Warehouse MS",
   "description": "Aplikasi untuk digitalisasi manajemen keanggotaan koperasi: pendaftaran, transaksi, dan dashboard.",
   "start_url": "/",
   "display": "standalone",

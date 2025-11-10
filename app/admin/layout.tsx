@@ -3,16 +3,20 @@
 import React, { useState, useEffect } from "react";
 import {
   LayoutDashboard,
-  Users,
   Building2,
-  ClipboardCheck,
   Megaphone,
   Settings,
-  MapPin,
   Network,
   UserCog,
   ShieldCheck,
-  Wallet,
+  Package, // <-- Ikon baru untuk Barang
+  Archive, // <-- Ikon baru untuk Rak
+  ArrowLeftRight, // <-- Ikon baru untuk Transaksi
+  PackagePlus, // <-- Ikon baru untuk Barang Masuk
+  PackageMinus, // <-- Ikon baru untuk Barang Keluar
+  TrendingUp,
+  CardSim,
+  IdCard, // <-- Ikon baru untuk Prediksi
 } from "lucide-react";
 import Header from "@/components/admin-components/header";
 import Sidebar from "@/components/admin-components/sidebar";
@@ -34,7 +38,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, title }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { data: session } = useSession();
   const user = session?.user as User | undefined;
-  
+
   // Menutup sidebar saat ukuran layar berubah ke desktop
   useEffect(() => {
     const handleResize = () => {
@@ -56,35 +60,82 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, title }) => {
       href: "/admin/dashboard",
     },
     {
-      id: "keanggotaan",
-      label: "Keanggotaan",
-      icon: <Users className="h-5 w-5" />,
-      href: "/admin/keanggotaan",
+      id: "stok",
+      label: "Data Stok",
+      icon: <IdCard className="h-5 w-5" />,
+      href: "#",
+      children: [
+        {
+          id: "stok/gis",
+          label: "GIS Stok",
+          icon: <PackagePlus className="h-4 w-4" />,
+          href: "/admin/stok/gis",
+        },
+        {
+          id: "stok/kartu",
+          label: "Kartu Stok",
+          icon: <PackageMinus className="h-4 w-4" />,
+          href: "/admin/stok/kartu",
+        },
+        {
+          id: "stok/opname",
+          label: "Stok Opname",
+          icon: <Package className="h-4 w-4" />,
+          href: "/admin/stok/opname",
+        }
+      ],
     },
     {
-      id: "kantor",
-      label: "Kantor",
-      icon: <Building2 className="h-5 w-5" />,
-      href: "/admin/kantor",
+      id: "transaksi",
+      label: "Transaksi",
+      icon: <ArrowLeftRight className="h-5 w-5" />,
+      href: "#",
+      children: [
+        {
+          id: "transaksi/masuk",
+          label: "Barang Masuk",
+          icon: <PackagePlus className="h-4 w-4" />,
+          href: "/admin/transaksi/barang-masuk",
+        },
+        {
+          id: "transaksi/keluar",
+          label: "Barang Keluar",
+          icon: <PackageMinus className="h-4 w-4" />,
+          href: "/admin/transaksi/barang-keluar",
+        },
+      ],
     },
-    // {
-    //   id: "wallet",
-    //   label: "Wallet",
-    //   icon: <Wallet className="h-5 w-5" />,
-    //   href: "/admin/wallet",
-    // },
     {
-      id: "task",
-      label: "Tugas",
-      icon: <ClipboardCheck className="h-5 w-5" />,
-      href: "/admin/tugas",
-      // ... (children task)
-    },
-    {
-      id: "pengumuman",
-      label: "Pengumuman",
-      icon: <Megaphone className="h-5 w-5" />,
-      href: "/admin/pengumuman",
+      id: "masterdata",
+      label: "Master Data",
+      icon: <Archive className="h-5 w-5" />, // Ganti ikon agar beda dengan konfigurasi
+      href: "#",
+      children: [
+        {
+          id: "masterdata/kategori",
+          label: "Data Kategori",
+          icon: <Package className="h-4 w-4" />,
+          href: "/admin/master/kategori",
+        },
+        {
+          id: "masterdata/barang",
+          label: "Data Barang",
+          icon: <Package className="h-4 w-4" />,
+          href: "/admin/master/barang",
+        },
+        {
+          id: "masterdata/warehouse",
+          label: "Data Warehouse",
+          icon: <Building2 className="h-4 w-4" />,
+          href: "/admin/master/warehouse",
+        },
+        {
+          id: "masterdata/rak",
+          label: "Data Rak",
+          icon: <Archive className="h-4 w-4" />,
+          href: "/admin/master/rak",
+        },
+      ],
     },
     {
       id: "konfigurasi",
@@ -93,46 +144,16 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, title }) => {
       href: "#",
       children: [
         {
-          id: "konfigurasi/provinsi",
-          label: "Provinsi",
-          icon: <MapPin className="h-4 w-4" />,
-          href: "/admin/master/provinsi",
-        },
-        {
-          id: "konfigurasi/kota",
-          label: "Kota",
-          icon: <MapPin className="h-4 w-4" />,
-          href: "/admin/master/kota",
-        },
-        {
-          id: "konfigurasi/kecamatan",
-          label: "Kecamatan",
-          icon: <MapPin className="h-4 w-4" />,
-          href: "/admin/master/kecamatan",
-        },
-        {
-          id: "konfigurasi/kelurahan",
-          label: "Kelurahan",
-          icon: <MapPin className="h-4 w-4" />,
-          href: "/admin/master/kelurahan",
-        },
-        {
-          id: "konfigurasi/level",
-          label: "Struktur Partai",
+          id: "konfigurasi/klasifikasi",
+          label: "Klasifikasi",
           icon: <Network className="h-4 w-4" />,
-          href: "/admin/master/level",
+          href: "/admin/master/klasifikasi",
         },
         {
-          id: "konfigurasi/kategori-tugas",
-          label: "Kategori Tugas",
-          icon: <Network className="h-4 w-4" />,
-          href: "/admin/master/kategori-tugas",
-        },
-        {
-          id: "konfigurasi/jenis-kantor",
-          label: "Jenis Kantor",
-          icon: <Network className="h-4 w-4" />,
-          href: "/admin/master/jenis-kantor",
+          id: "konfigurasi/prediksi-stok",
+          label: "Prediksi Stok",
+          icon: <TrendingUp className="h-4 w-4" />,
+          href: "/admin/master/prediksi-stok",
         },
         {
           id: "konfigurasi/pengelola",
@@ -150,7 +171,9 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, title }) => {
     },
   ];
 
-  // ✅ DEFINISI MENU KHUSUS UNTUK ADMIN
+  // ✅ DEFINISI MENU KHUSUS UNTUK ADMIN (KONTEKS WMS)
+  // Admin fokus pada operasional (Transaksi) dan melihat data,
+  // tapi tidak bisa mengubah konfigurasi sistem.
   const adminMenuItems: MenuItem[] = [
     {
       id: "dashboard",
@@ -159,30 +182,56 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, title }) => {
       href: "/admin/dashboard",
     },
     {
-      id: "keanggotaan",
-      label: "Keanggotaan",
-      icon: <Users className="h-5 w-5" />,
-      href: "/admin/keanggotaan",
+      id: "transaksi",
+      label: "Transaksi",
+      icon: <ArrowLeftRight className="h-5 w-5" />,
+      href: "#",
+      children: [
+        {
+          id: "transaksi/masuk",
+          label: "Barang Masuk",
+          icon: <PackagePlus className="h-4 w-4" />,
+          href: "/admin/transaksi/masuk",
+        },
+        {
+          id: "transaksi/keluar",
+          label: "Barang Keluar",
+          icon: <PackageMinus className="h-4 w-4" />,
+          href: "/admin/transaksi/keluar",
+        },
+      ],
     },
     {
-      id: "kantor",
-      label: "Kantor",
-      icon: <Building2 className="h-5 w-5" />,
-      href: "/admin/kantor",
-    },
-    {
-      id: "task",
-      label: "Tugas",
-      icon: <ClipboardCheck className="h-5 w-5" />,
-      href: "/admin/tugas",
-      // Jika Anda ingin Admin melihat submenu tugas, tambahkan children di sini:
-      // children: [ ... ]
+      id: "masterdata",
+      label: "Lihat Data", // Admin mungkin hanya bisa 'melihat'
+      icon: <Settings className="h-5 w-5" />,
+      href: "#",
+      children: [
+        {
+          id: "masterdata/barang",
+          label: "Data Barang",
+          icon: <Package className="h-4 w-4" />,
+          href: "/admin/master/barang",
+        },
+        {
+          id: "masterdata/warehouse",
+          label: "Data Warehouse",
+          icon: <Building2 className="h-4 w-4" />,
+          href: "/admin/master/warehouse",
+        },
+        {
+          id: "masterdata/rak",
+          label: "Data Rak",
+          icon: <Archive className="h-4 w-4" />,
+          href: "/admin/master/rak",
+        },
+      ],
     },
   ];
 
-  // ✅ Tentukan menu items berdasarkan role pengguna
+  // Tentukan menu items berdasarkan role pengguna
   let menuItems: MenuItem[] = [];
-  
+
   if (user) {
     if (userHasRole(user, "superadmin")) {
       menuItems = superadminMenuItems;
@@ -193,7 +242,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, title }) => {
 
   // Jika tidak ada user atau role tidak dikenali, menu akan kosong (sesuai let menuItems = [])
   // Ini membantu mencegah akses ke menu jika otentikasi belum selesai.
-  
+
   return (
     <div className="h-screen flex overflow-hidden bg-gray-100">
       {/* Sidebar */}
