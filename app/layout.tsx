@@ -21,7 +21,7 @@ export const metadata: Metadata = {
   description:
     "Aplikasi keanggotaan digital untuk mengelola data anggota, status keanggotaan, dan berbagai layanan koperasi secara online.",
   icons: {
-    icon: "/digital-kta-logo.png",
+    icon: "/wharehouse-management-system-logo.png",
   },
 };
 

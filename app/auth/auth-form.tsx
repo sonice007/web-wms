@@ -349,7 +349,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
             <div className="flex items-center justify-center mb-6">
               <div className="flex items-center gap-1">
                 <Image
-                  src="/logo.webp"
+                  src="/wms.webp"
                   alt="Warehouse MS Logo"
                   width={50}
                   height={50}
@@ -360,7 +360,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
                     Warehouse MS
                   </h2>
                   <p className="text-xs text-gray-600 mt-[-5px]">
-                    Keanggotaan #AntiRibet
+                    Efisiensi Operasional
                   </p>
                 </div>
               </div>
@@ -369,15 +369,13 @@ export default function AuthForm({ mode }: AuthFormProps) {
             <div className="w-16 h-1 bg-gradient-to-r from-red-600 to-red-400 mx-auto mb-4"></div>
 
             <p className="text-base font-medium text-gray-700 max-w-sm mx-auto leading-relaxed">
-              Kartu Anggota Anda, kini di dalam ponsel. Akses semua identitas
-              dan manfaat keanggotaan Anda dengan praktis, aman, dan modern.
-              Ucapkan selamat tinggal pada kartu fisik!
+              Memperkenalkan aplikasi WMS yang cepat, andal, dan real-time. Dibangun dengan Next.js (FE), Laravel (BE), dan Tailwind CSS untuk manajemen inventaris, PO, dan SO yang superior
             </p>
 
             <div className="mt-6 flex justify-center space-x-4 text-sm text-gray-600">
               <div className="flex items-center">
                 <div className="w-2 h-2 bg-red-500 rounded-full mr-2"></div>
-                Keanggotaan
+                Soni Setiawan
               </div>
               <div className="flex items-center">
                 <div className="w-2 h-2 bg-red-500 rounded-full mr-2"></div>
@@ -425,7 +423,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
           <motion.div variants={variants} className="text-center">
             <div className="flex items-center justify-center mb-4 gap-1">
               <Image
-                src="/logo.webp"
+                src="/wms.webp"
                 alt="Warehouse MS Logo"
                 width={50}
                 height={50}
@@ -436,14 +434,14 @@ export default function AuthForm({ mode }: AuthFormProps) {
                   Warehouse MS
                 </h2>
                 <p className="text-xs text-gray-600 mt-[-5px]">
-                  Keanggotaan #AntiRibet
+                  Efisiensi Operasional
                 </p>
               </div>
             </div>
             <p className="text-sm text-gray-600 mt-2">
               {isLogin
-                ? "Akses dashboard admin untuk mengelola operasional koperasi"
-                : "Bergabunglah sebagai anggota koperasi untuk memulai"}
+                ? "Akses dashboard admin untuk mengelola WMS"
+                : ""}
             </p>
           </motion.div>
 

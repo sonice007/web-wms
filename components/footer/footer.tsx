@@ -59,7 +59,7 @@ export default function Footer() {
                 {/* Struktur diubah agar logo dan teks sejajar */}
                 <div className="flex items-center gap-4 mb-4">
                   <Image
-                    src="/logo.webp"
+                    src="/wms.webp"
                     alt="Warehouse MS Logo"
                     width={75}
                     height={75}

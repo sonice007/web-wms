@@ -3,49 +3,27 @@
 import { useEffect, useMemo, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import useModal from "@/hooks/use-modal";
+import Swal from "sweetalert2";
 import {
-  useGetBarangListQuery,
-} from "@/services/admin/master/barang.service";
-import { Barang } from "@/types/admin/master/barang";
+  useGetStockOpnameListQuery,
+  useDeleteStockOpnameMutation,
+} from "@/services/admin/stock-opname.service";
 import { Input } from "@/components/ui/input";
 import ActionsGroup from "@/components/admin-components/actions-group";
 import { useGetWarehouseListQuery } from "@/services/admin/master/warehouse.service";
 import { useGetRakListQuery } from "@/services/admin/master/rak.service";
 import { useGetKategoriListQuery } from "@/services/admin/master/kategori.service";
-import { Loader2, Plus } from "lucide-react"; // Ganti Download dengan Plus
-import DetailBarangModal from "@/components/modals/barang-detail"; 
-
-// IMPORT BARU: Impor form modal penyesuaian stok
-import FormPenyesuaianStok from "@/components/form-modal/admin/stock-opname-form";
-// Definisikan tipe data untuk form opname
-import { StockOpnameForm } from "@/types/admin/stock-opname";
-
+import { Loader2} from "lucide-react"; // Ganti Download dengan Plus
+import { StockOpname } from "@/types/admin/stock-opname";
 
 export default function StockOpnamePage() {
-  // State BARU: untuk form penyesuaian stok
-  const [opnameForm, setOpnameForm] = useState<Partial<StockOpnameForm>>({
-    barang_id: undefined,
-    stock_sistem: 0,
-    stock_fisik: 0,
-    keterangan: "",
-    tanggal: new Date().toISOString().split('T')[0], // Default hari ini
-  });
   
-  // State untuk Form Modal (Tambah/Edit) -> Ganti nama untuk kejelasan
-  const { 
-    isOpen: isOpnameModalOpen, 
-    openModal: openOpnameModal, 
-    closeModal: closeOpnameModal 
-  } = useModal();
-  
-  // State untuk Modal Detail (Kartu Stok)
-  const [isDetailOpen, setIsDetailOpen] = useState(false);
-  const [selectedDetailBarang, setSelectedDetailBarang] = useState<Barang | null>(null);
-
+ 
   const itemsPerPage = 10;
   const [currentPage, setCurrentPage] = useState(1);
   const [query, setQuery] = useState("");
+
+  const [deleteStockOpname] = useDeleteStockOpnameMutation();
 
   const [filterWarehouseId, setFilterWarehouseId] = useState<number | undefined>(
     undefined
@@ -182,7 +160,7 @@ export default function StockOpnamePage() {
   };
   // ... (AKHIR DARI KODE FILTER) ...
 
-  const { data, isLoading, refetch } = useGetBarangListQuery({
+  const { data, isLoading, refetch } = useGetStockOpnameListQuery({
     page: currentPage,
     paginate: itemsPerPage,
     search: query,
@@ -195,32 +173,35 @@ export default function StockOpnamePage() {
   const barangList = useMemo(() => data?.data || [], [data]);
   const lastPage = useMemo(() => data?.last_page || 1, [data]);
 
-  // handleDetail (untuk melihat kartu stok) tetap ada
-  const handleDetail = (item: Barang) => {
-    setSelectedDetailBarang(item);
-    setIsDetailOpen(true);
-  };
-
-  // BARU: Fungsi untuk membuka form penyesuaian
-  const handleTambahPenyesuaian = () => {
-    setOpnameForm({ // Reset form ke default
-      barang_id: undefined,
-      stock_sistem: 0,
-      stock_fisik: 0,
-      keterangan: "",
-      tanggal: new Date().toISOString().split('T')[0],
-    });
-    openOpnameModal();
-  };
-
   // Filter data (sisi klien)
   const filteredData = useMemo(() => {
     if (!query) return barangList;
     return barangList.filter(
       (item) =>
-        item.name.toLowerCase().includes(query.toLowerCase())
+        item.product_name.toLowerCase().includes(query.toLowerCase())
     );
   }, [barangList, query]);
+
+  const handleDelete = async (item: StockOpname) => {
+    const confirm = await Swal.fire({
+      title: "Yakin hapus Barang Masuk?",
+      text: item.product_name,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Hapus",
+    });
+
+    if (confirm.isConfirmed) {
+      try {
+        await deleteStockOpname(item.id).unwrap();
+        await refetch();
+        Swal.fire("Berhasil", "Barang dihapus", "success");
+      } catch (error) {
+        Swal.fire("Gagal", "Gagal menghapus Barang", "error");
+        console.error(error);
+      }
+    }
+  };
 
   return (
     <div className="p-6 space-y-6">
@@ -383,17 +364,6 @@ export default function StockOpnamePage() {
             </div>
           </div>
         </div>
-        <hr className="my-4" />
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <h3 className="text-lg font-semibold">Stock Opname</h3>
-          {/* GANTI BUTTON EXPORT MENJADI TAMBAH PENYESUAIAN */}
-            <Button
-              onClick={handleTambahPenyesuaian}
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Tambah Penyesuaian Stok
-            </Button>
-        </div>
       </div>
 
       <Card>
@@ -402,14 +372,13 @@ export default function StockOpnamePage() {
             <thead className="bg-muted text-left">
               <tr>
                 <th className="px-4 py-2">Aksi</th>
-                <th className="px-4 py-2">Kategori</th>
+                <th className="px-4 py-2">Warehouse</th>
+                <th className="px-4 py-2">Rak</th>
                 <th className="px-4 py-2">SKU</th>
                 <th className="px-4 py-2">Nama</th>
-                <th className="px-4 py-2">Harga</th>
-                <th className="px-4 py-2 font-semibold">Stok Sistem</th>
-                <th className="px-4 py-2">Min. Stok</th>
-                <th className="px-4 py-2">Unit</th>
-                <th className="px-4 py-2">Status</th>
+                <th className="px-4 py-2">Stok Awal</th>
+                <th className="px-4 py-2">Selisih</th>
+                <th className="px-4 py-2">Stok Akhir</th>
               </tr>
             </thead>
             <tbody>
@@ -431,31 +400,18 @@ export default function StockOpnamePage() {
                     <td className="px-4 py-2">
                       <div className="flex gap-2">
                         <ActionsGroup
-                          handleDetail={() => handleDetail(item)}
+                          handleDelete={() => handleDelete(item)}
                           // Tombol edit/delete barang tidak relevan di halaman opname
                         />
                       </div>
                     </td>
-                    <td className="px-4 py-2 font-medium">{item.category_name}</td>
-                    <td className="px-4 py-2 font-medium">{item.sku}</td>
-                    <td className="px-4 py-2 font-medium">{item.name}</td>
-                    <td className="px-4 py-2 font-medium">
-                      {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(item.price ?? 0)}
-                    </td>
-                    <td className="px-4 py-2 font-semibold text-blue-600">{item.stock}</td>
-                    <td className="px-4 py-2 font-medium">{item.min_stock}</td>
-                    <td className="px-4 py-2 font-medium">{item.unit}</td>
-                    <td className="px-4 py-2 font-medium">
-                      <span
-                        className={`inline-block px-2 py-1 rounded text-xs font-semibold ${
-                          item.status
-                            ? "bg-green-100 text-green-700"
-                            : "bg-red-100 text-red-700"
-                        }`}
-                      >
-                        {item.status ? "Aktif" : "Tidak Aktif"}
-                      </span>
-                    </td>
+                    <td className="px-4 py-2 font-medium">{item.warehouse_name}</td>
+                    <td className="px-4 py-2 font-medium">{item.warehouse_storage_name}</td>
+                    <td className="px-4 py-2 font-medium">{item.product_sku}</td>
+                    <td className="px-4 py-2 font-medium">{item.product_name}</td>
+                    <td className="px-4 py-2 font-semibold text-blue-600">{item.initial_stock}</td>
+                    <td className="px-4 py-2 font-medium">{item.difference}</td>
+                    <td className="px-4 py-2 font-medium">{item.counted_stock}</td>
                   </tr>
                 ))
               )}
@@ -486,37 +442,7 @@ export default function StockOpnamePage() {
           </div>
         </div>
       </Card>
-      
-      {/* Modal BARU untuk Form Penyesuaian Stok */}
-      {isOpnameModalOpen && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
-          <FormPenyesuaianStok
-            form={opnameForm}
-            setForm={setOpnameForm}
-            onCancel={() => {
-              setOpnameForm({}); // Reset form
-              closeOpnameModal();
-            }}
-            onSubmit={() => {
-              refetch(); // Refresh daftar barang untuk update stok
-              closeOpnameModal();
-            }}
-            // Anda mungkin perlu mutation hook loading di sini
-            // isLoading={isSubmitLoading} 
-          />
-        </div>
-      )}
-
-      {/* Modal untuk Detail (Kartu Stok) */}
-      {isDetailOpen && selectedDetailBarang && (
-        <DetailBarangModal
-          barang={selectedDetailBarang}
-          onClose={() => {
-            setIsDetailOpen(false);
-            setSelectedDetailBarang(null);
-          }}
-        />
-      )}
+    
     </div>
   );
 }

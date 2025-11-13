@@ -1,29 +1,10 @@
 import React from "react";
-import { Menu, Bell } from "lucide-react";
+import { Menu } from "lucide-react";
 import { HeaderProps } from "@/types";
 import { useSession } from "next-auth/react";
-import { IconBell } from "@tabler/icons-react";
-import { useGetNotificationsQuery } from "@/services/notification.service";
-import { useRouter } from "next/navigation";
 
 const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
   const { data: session } = useSession();
-
-  const { data } = useGetNotificationsQuery(
-    { page: 1, paginate: 10 },
-    {
-      pollingInterval: 300000,
-      refetchOnFocus: true,
-      refetchOnMountOrArgChange: true,
-    }
-  );
-  const notifications = data?.data || [];
-  const hasUnread = notifications.some((n) => !n.read_at);
-
-  const route = useRouter();
-  const handleNotif = () => {
-    route.push("/admin/notification");
-  };
 
   // Ambil data shop
   const user = session?.user;
@@ -44,15 +25,6 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
 
       {/* Right Section */}
       <div className="flex items-center space-x-2 sm:space-x-4">
-        <div
-          className="relative cursor-pointer hover:bg-gray-400 rounded-lg p-2 transition-all border border-slate-200"
-          onClick={handleNotif}
-        >
-          <IconBell className="w-6 h-6" />
-          {hasUnread && (
-            <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-500 ring-2 ring-white" />
-          )}
-        </div>
         <div className="flex items-center space-x-2">
           <span className="hidden sm:block text-sm font-medium text-gray-700">
             {userName}

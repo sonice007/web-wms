@@ -1,9 +1,12 @@
 "use client";
 
 import React from "react";
-import { Barang } from "@/types/admin/master/barang";
+import { Inventory } from "@/types/admin/master/barang";
 import { Button } from "@/components/ui/button";
 import { X, Loader2, Printer } from "lucide-react";
+import {
+  useGetKartuStokListQuery
+} from "@/services/admin/master/barang.service";
 
 // Print only .print-section
 if (typeof window !== "undefined") {
@@ -33,30 +36,9 @@ if (typeof window !== "undefined") {
   }
 }
 
-// --- (Hook dummy 'useGetStockCardQuery' Anda di sini) ---
-// ...
-const useGetStockCardQuery = (barangId: number | undefined) => {
-  console.log("Fetching stock card for barangId:", barangId);
-  const dummyData = {
-    data: [
-      { id: 1, date: "2025-11-01", type: "in", quantity: 100, stock_after: 100, description: "Stok Awal" },
-      { id: 2, date: "2025-11-03", type: "out", quantity: 20, stock_after: 80, description: "Penjualan INV/001" },
-      { id: 3, date: "2025-11-05", type: "in", quantity: 50, stock_after: 130, description: "Pembelian PO/001" },
-      { id: 4, date: "2025-11-10", type: "out", quantity: 10, stock_after: 120, description: "Penjualan INV/002" },
-      { id: 5, date: "2025-11-11", type: "in", quantity: 25, stock_after: 145, description: "Retur Penjualan" },
-    ],
-  };
-  const [isLoading, setIsLoading] = React.useState(true);
-  React.useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 500);
-    return () => clearTimeout(timer);
-  }, []);
-  return { data: dummyData, isLoading: isLoading, isError: false };
-};
-// ---
 
 interface DetailBarangModalProps {
-  barang: Barang;
+  barang: Inventory;
   onClose: () => void;
 }
 
@@ -65,7 +47,12 @@ export default function DetailBarangModal({
   onClose,
 }: DetailBarangModalProps) {
   
-  const { data: historyData, isLoading: isHistoryLoading } = useGetStockCardQuery(barang.id);
+  const { data: historyData, isLoading: isHistoryLoading } = useGetKartuStokListQuery({
+    page: 1,
+    paginate: 100,
+    search: "",
+    inventory_id: barang.id,
+  });
 
   const handlePrint = () => {
     window.print();
@@ -97,13 +84,12 @@ export default function DetailBarangModal({
           <div className="mb-6">
             <h3 className="text-base font-semibold mb-3 border-b pb-2">Informasi Barang</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2 text-sm">
-              <div><strong>SKU:</strong> {barang.sku}</div>
-              <div><strong>Nama:</strong> {barang.name}</div>
-              <div><strong>Kategori:</strong> {barang.category_name}</div>
-              <div><strong>Harga:</strong>{new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(barang.price ?? 0)}</div>
-              <div><strong>Stok Saat Ini:</strong> {barang.stock} {barang.unit}</div>
-              <div><strong>Min. Stok:</strong> {barang.min_stock} {barang.unit}</div>
-              <div className="col-span-1 md:col-span-2"><strong>Deskripsi:</strong> {barang.description || "-"}</div>
+              <div><strong>Warehouse:</strong> {barang.warehouse_code} - {barang.warehouse_name}</div>
+              <div><strong>Rak:</strong> {barang.warehouse_storage_name}</div>
+              <div><strong>SKU:</strong> {barang.product_sku}</div>
+              <div><strong>Nama:</strong> {barang.product_name}</div>
+              <div><strong>Stok Saat Ini:</strong> {barang.stock}</div>
+              <div><strong>Min. Stok:</strong> {barang.min_stock}</div>
               <div><strong>Status:</strong>
                 <span className={`ml-2 inline-block px-2 py-0.5 rounded text-xs font-semibold ${
                     barang.status
@@ -126,7 +112,7 @@ export default function DetailBarangModal({
                   <tr>
                     <th className="px-4 py-2">Tanggal</th>
                     <th className="px-4 py-2">Tipe</th>
-                    <th className="px-4 py-2">Jumlah</th>
+                    <th className="px-4 py-2 text-right">Jumlah</th>
                     <th className="px-4 py-2">Stok Akhir</th>
                     <th className="px-4 py-2">Keterangan</th>
                   </tr>
@@ -145,25 +131,57 @@ export default function DetailBarangModal({
                       </td>
                     </tr>
                   ) : (
-                    historyData.data.map((item: any) => (
-                      <tr key={item.id} className="border-t dark:border-zinc-700">
-                        <td className="px-4 py-2">{new Date(item.date).toLocaleDateString('id-ID')}</td>
-                        <td className="px-4 py-2">
-                          <span className={`font-medium ${item.type === 'in' ? 'text-green-600' : 'text-red-600'}`}>
-                            {item.type === 'in' ? 'Masuk' : 'Keluar'}
-                          </span>
-                        </td>
-                        <td className="px-4 py-2">{item.type === 'in' ? '+' : '-'}{item.quantity}</td>
-                        <td className="px-4 py-2">{item.stock_after}</td>
-                        <td className="px-4 py-2">{item.description}</td>
-                      </tr>
-                    ))
+                    (() => {
+                      // Define the type for stock history item
+                      interface StockHistoryItem {
+                        id: string;
+                        updated_at: string;
+                        notes: string;
+                        quantity: number;
+                      }
+
+                      // Hitung stok akhir mundur dari barang.stock
+                      let currentStock = barang.stock ?? 0;
+                      // Urutkan data dari terbaru ke terlama
+                      const sortedData = ([...historyData.data] as unknown as StockHistoryItem[]).sort(
+                        (a, b) =>
+                          new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+                      );
+                      // Simpan stok akhir untuk setiap item
+                      const stockAfterMap: Record<string, number> = {};
+                      sortedData.forEach((item: StockHistoryItem) => {
+                        stockAfterMap[item.id] = currentStock;
+                        // Kurangi/tambah stok sesuai tipe
+                        if (item.notes.startsWith('Sales Order')) {
+                          currentStock += item.quantity; // Keluar (-), jadi tambahkan ke stok mundur
+                        } else {
+                          currentStock -= item.quantity; // Masuk (+), jadi kurangi stok mundur
+                        }
+                      });
+                      // Render data urut dari terbaru ke terlama
+                      return sortedData.map((item: StockHistoryItem) => (
+                        <tr key={item.id} className="border-t dark:border-zinc-700">
+                          <td className="px-4 py-2">{new Date(item.updated_at).toLocaleDateString('id-ID')}</td>
+                          <td className="px-4 py-2">
+                            <span className={`font-medium ${
+                              item.notes.startsWith('Sales Order') ? 'text-red-600' : 'text-green-600'
+                            }`}>
+                              {item.notes.startsWith('Sales Order') ? 'Keluar (-)' : 'Masuk (+)'}
+                            </span>
+                          </td>
+                          <td className="px-4 py-2 text-right">{item.notes.startsWith('Sales Order') ? '+' : '-'}{item.quantity}</td>
+                          <td className="px-4 py-2">{stockAfterMap[item.id]}</td>
+                          <td className="px-4 py-2">{item.notes}</td>
+                        </tr>
+                      ));
+                    })()
                   )}
                 </tbody>
               </table>
             </div>
           </div>
-        </div> {/* Akhir dari .print-section */}
+        </div>
+        {/* Akhir dari .print-section */}
         
       </div> {/* Akhir dari Kotak Modal Shell */}
     </div>

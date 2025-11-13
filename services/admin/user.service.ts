@@ -15,7 +15,7 @@ export const userApi = apiSlice.injectEndpoints({
       { page: number; paginate: number }
     >({
       query: ({ page, paginate }) => ({
-        url: `/user/users`,
+        url: `/user`,
         method: "GET",
         params: {
           page,

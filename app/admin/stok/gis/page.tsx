@@ -1,13 +1,16 @@
 "use client";
 
 import { useMemo, useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import { Inventory } from "@/types/admin/master/barang";
 import {
   Building2,
   Package,
   LayoutGrid,
   Search,
   X,
+  DollarSign, // Ikon baru untuk Total Value
+  Loader2,  // Ikon loading
 } from "lucide-react";
 
 // Impor untuk Modal (Dialog) dan Input
@@ -20,24 +23,34 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { 
+  useGetGisWarehouseQuery, 
+  useGetGisWarehouseByIdQuery 
+} from "@/services/admin/dashboard.service";
 
-// ===== Impor Peta Baru: Pigeon-Maps =====
-// Tidak perlu dynamic import!
+import {
+  useGetInventoryListQuery
+} from "@/services/admin/master/barang.service";
+
+// Impor Peta
 import { Map, Marker, Overlay } from "pigeon-maps";
 
 // ===== Utilitas =====
 const formatNumber = (num: number): string =>
   new Intl.NumberFormat("id-ID").format(num);
+  
+const formatCurrency = (num: number): string =>
+  new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR" }).format(num);
 
-// ===== Tipe Data (Sama) =====
+// ===== Tipe Data (Asumsi dari kode Anda) =====
 interface WarehouseItem {
   id: string;
-  nama: string;
+  name: string;
   stok: number;
 }
 interface WarehouseData {
-  id: string;
-  nama: string;
+  id: string; // ID ini bisa jadi string, kita akan konversi ke number
+  name: string;
   posisi: [number, number]; // [lat, lon]
   totalKategori: number;
   totalBarang: number;
@@ -46,66 +59,69 @@ interface WarehouseData {
 
 // ===== Data Dummy (Sama) =====
 const DUMMY_WAREHOUSE_DATA: WarehouseData[] = [
+  // ... data dummy Anda tidak berubah ...
   {
     id: "jkt",
-    nama: "Warehouse Jakarta",
+    name: "Warehouse Jakarta",
     posisi: [-6.2088, 106.8456],
     totalKategori: 50,
     totalBarang: 5200,
     items: [
-      { id: "jkt1", nama: "Laptop XPS 15", stok: 100 },
-      { id: "jkt2", nama: "Mouse Logitech MX", stok: 350 },
-      { id: "jkt3", nama: "Keyboard Mechanical", stok: 210 },
-      { id: "jkt4", nama: "Monitor Dell 27\"", stok: 150 },
-      { id: "jkt5", nama: "Tinta Printer Epson", stok: 800 },
+      { id: "jkt1", name: "Laptop XPS 15", stok: 100 },
+      { id: "jkt2", name: "Mouse Logitech MX", stok: 350 },
     ],
   },
   {
     id: "bdg",
-    nama: "Warehouse Bandung",
+    name: "Warehouse Bandung",
     posisi: [-6.9175, 107.6191],
     totalKategori: 30,
     totalBarang: 3100,
     items: [
-      { id: "bdg1", nama: "Kabel HDMI 2m", stok: 500 },
-      { id: "bdg2", nama: "Webcam Full HD", stok: 120 },
-      { id: "bdg3", nama: "Kursi Gaming", stok: 80 },
+      { id: "bdg1", name: "Kabel HDMI 2m", stok: 500 },
+      // ...
     ],
   },
-  {
-    id: "sby",
-    nama: "Warehouse Surabaya",
-    posisi: [-7.2575, 112.7521],
-    totalKategori: 40,
-    totalBarang: 4500,
-    items: [
-      { id: "sby1", nama: "Router WiFi 6", stok: 130 },
-      { id: "sby2", nama: "SSD NVMe 1TB", stok: 200 },
-      { id: "sby3", nama: "RAM DDR5 16GB", stok: 400 },
-      { id: "sby4", nama: "Mousepad Gaming XL", stok: 600 },
-    ],
-  },
+  // ...
 ];
 
-// ===== Komponen Peta JAUH LEBIH SEDERHANA =====
+
+// ===== Komponen Peta =====
 
 export default function StokGisPage() {
   const currentYear = new Date().getFullYear();
   const [year, setYear] = useState<number>(currentYear);
 
+  // 1. Hook untuk list warehouse (tetap)
+  // Fetch list warehouse
+  const { data: gisWarehouseData, isFetching: isGisWarehouseFetching } = 
+    useGetGisWarehouseQuery({});
+
+  // 2. State untuk ID warehouse yang akan di-fetch detailnya
+  const [fetchId, setFetchId] = useState<number | null>(null);
+
+  // 3. Hook untuk detail warehouse (dipanggil di top-level)
+  const { 
+    data: gisWarehouseByIdData, 
+    isFetching: isGisWarehouseByIdFetching 
+  } = useGetGisWarehouseByIdQuery(
+    // Parameter: { id }
+    { id: fetchId! }, 
+    // Opsi: 'skip' jika fetchId null (penting!)
+    { skip: !fetchId } 
+  );
+
   // State untuk Modal (Dialog)
   const [selectedWarehouse, setSelectedWarehouse] =
-    useState<WarehouseData | null>(null);
+    useState<Inventory | null>(null);
   
   // State untuk Popup (Overlay) di Peta
   const [activeMarker, setActiveMarker] = useState<WarehouseData | null>(null);
   
   const [searchTerm, setSearchTerm] = useState("");
 
-  const warehouseData = DUMMY_WAREHOUSE_DATA;
-  const isFetching = false; // Dummy
-
-  // Tidak perlu lagi `useMemo` untuk ikon!
+  const warehouseData = gisWarehouseData || DUMMY_WAREHOUSE_DATA;
+  const isFetching = isGisWarehouseFetching; // Hanya loading list awal
 
   // Opsi tahun
   const yearOptions = useMemo(
@@ -113,23 +129,42 @@ export default function StokGisPage() {
     [currentYear]
   );
 
-  // Filter pencarian
+  // Query inventory list for selected warehouse
+  const { data: inventoryData } = useGetInventoryListQuery(
+    selectedWarehouse
+      ? {
+          page: 1,
+          paginate: 100,
+          search: searchTerm,
+          warehouse_id: Number(selectedWarehouse.id),
+        }
+      : { page: 1, paginate: 100, search: searchTerm, warehouse_id: undefined },
+    { skip: !selectedWarehouse }
+  );
+
+  // filteredItems available in render scope
   const filteredItems = useMemo(() => {
-    if (!selectedWarehouse) return [];
-    return selectedWarehouse.items.filter((item) =>
-      item.nama.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [selectedWarehouse, searchTerm]);
+    const itemsFromApi = inventoryData?.data ?? [];
+    return itemsFromApi.length > 0
+      ? itemsFromApi
+      : [];
+  }, [inventoryData, selectedWarehouse, searchTerm]);
 
   // Handler Modal (Dialog)
   const handleOpenModal = (warehouse: WarehouseData) => {
     setActiveMarker(null); // Tutup popup peta
-    setSelectedWarehouse(warehouse); // Buka modal
+    setFetchId(Number(warehouse.id)); // **INI KUNCINYA**: Memicu hook fetch by ID
+    setSelectedWarehouse({
+      id: Number(warehouse.id),
+      warehouse_code: "",
+    } as Inventory); // Set ID saja dulu
+    setActiveMarker(warehouse);
     setSearchTerm("");
   };
 
   const handleCloseModal = () => {
     setSelectedWarehouse(null);
+    setFetchId(null); // **INI KUNCINYA**: Reset fetch ID agar query berhenti
   };
 
   // Komponen Tabel
@@ -145,6 +180,7 @@ export default function StokGisPage() {
     <div className="p-4 md:p-6 space-y-6">
       {/* Header dan Filter Tahun */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        {/* ... header tidak berubah ... */}
         <div>
           <h1 className="text-3xl font-bold text-gray-900">
             Data Stok di Warehouse (GIS)
@@ -153,12 +189,8 @@ export default function StokGisPage() {
             Pantau lokasi dan detail stok warehouse secara geografis
           </p>
         </div>
-
-        {/* Filter Tahun */}
         <div className="flex items-center gap-2">
-          <label htmlFor="year" className="text-sm text-gray-600">
-            Tahun:
-          </label>
+          {/* ... filter tahun tidak berubah ... */}
           <select
             id="year"
             className="h-9 rounded-md border border-gray-300 bg-white px-3 text-sm"
@@ -180,45 +212,36 @@ export default function StokGisPage() {
       {/* Konten Peta */}
       <Card>
         <CardContent className="h-[60vh] md:h-[68vh] w-full p-4 mt-[-20px]">
-          {/* Ganti MapContainer -> Map
-            Ganti center -> defaultCenter
-            Ganti zoom -> defaultZoom
-            Tidak perlu 'style' atau 'zIndex'
-          */}
           <Map 
-            height={540} // Anda bisa atur tinggi di sini atau biarkan 100% dari parent
-            defaultCenter={[-6.9175, 109.6191]} // Center di tengah P. Jawa
+            height={540}
+            defaultCenter={[-6.9175, 109.6191]}
             defaultZoom={7}
-            onClick={() => setActiveMarker(null)} // Klik peta akan menutup popup
+            onClick={() => setActiveMarker(null)}
           >
-            {/* TileLayer sudah otomatis (OSM) */}
-            
             {warehouseData.map((wh) => (
               <Marker
                 key={wh.id}
-                anchor={wh.posisi} // Ganti position -> anchor
-                color="#3B82F6" // Ganti warna pin
-                onClick={() => setActiveMarker(wh)} // Klik marker untuk buka popup
+                anchor={wh.posisi}
+                color="#3B82F6"
+                onClick={() => setActiveMarker(wh)}
               />
             ))}
 
-            {/* Ini pengganti <Popup> dari Leaflet */}
             {activeMarker && (
               <Overlay
                 anchor={activeMarker.posisi}
-                offset={[0, 0]} // Sesuaikan offset
+                offset={[0, 0]}
               >
-                {/* Kita buat UI Popup manual dengan Tailwind */}
                 <div className="w-60 bg-white rounded-lg shadow-lg p-3 relative">
+                  {/* ... popup overlay tidak berubah ... */}
                   <button
                     onClick={() => setActiveMarker(null)}
                     className="absolute -top-2 -right-2 bg-white rounded-full p-0.5 shadow"
                   >
                     <X className="h-4 w-4 text-gray-600"/>
                   </button>
-
                   <div className="space-y-2">
-                    <h3 className="font-bold text-md">{activeMarker.nama}</h3>
+                    <h3 className="font-bold text-md">{activeMarker.name}</h3>
                     <div className="flex items-center gap-2 text-sm">
                       <LayoutGrid className="h-4 w-4 text-blue-600" />
                       <span>{formatNumber(activeMarker.totalKategori)} Kategori</span>
@@ -242,13 +265,13 @@ export default function StokGisPage() {
         </CardContent>
       </Card>
 
-      {/* Modal / Dialog untuk Detail Stok (Tidak berubah) */}
+      {/* ===== Modal / Dialog untuk Detail Stok (DIPERBARUI) ===== */}
       <Dialog open={!!selectedWarehouse} onOpenChange={handleCloseModal}>
         <DialogContent className="sm:max-w-3xl h-[80vh] flex flex-col">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Building2 className="h-6 w-6" />
-              Detail Stok: {selectedWarehouse?.nama}
+              Detail Stok
             </DialogTitle>
           </DialogHeader>
           <DialogClose
@@ -259,60 +282,74 @@ export default function StokGisPage() {
             <span className="sr-only">Close</span>
           </DialogClose>
 
-          {/* Search Bar di dalam Modal */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <Input
-              type="text"
-              placeholder="Cari nama barang..."
-              className="pl-9"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
+          {/* ----- Konten Modal DIPERBARUI ----- */}
+          
+          {/* 1. Tampilkan Loading jika sedang fetch data by ID */}
+          {isGisWarehouseByIdFetching && (
+            <div className="flex-1 flex items-center justify-center">
+              <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
+              <span className="ml-2">Memuat data terbaru...</span>
+            </div>
+          )}
 
-          {/* Tabel Daftar Barang (Scrollable) */}
-          <div className="flex-1 overflow-y-auto mt-4">
-            <SimpleTable>
-              <thead className="text-xs text-gray-700 uppercase bg-gray-50 sticky top-0">
-                <tr>
-                  <th scope="col" className="px-6 py-3">
-                    Nama Barang
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-right">
-                    Jumlah Stok
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredItems.map((item) => (
-                  <tr key={item.id} className="bg-white border-b">
-                    <th
-                      scope="row"
-                      className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap"
-                    >
-                      {item.nama}
-                    </th>
-                    <td className="px-6 py-4 text-right font-bold">
-                      {formatNumber(item.stok)}
-                    </td>
-                  </tr>
-                ))}
-                {filteredItems.length === 0 && (
-                  <tr>
-                    <td
-                      colSpan={2}
-                      className="text-center text-gray-500 py-6"
-                    >
-                      {searchTerm
-                        ? "Barang tidak ditemukan."
-                        : "Tidak ada barang di warehouse ini."}
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </SimpleTable>
-          </div>
+          {/* 2. Tampilkan data jika fetch selesai */}
+          {!isGisWarehouseByIdFetching && (
+            <>
+              {/* Search Bar di dalam Modal */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  type="text"
+                  placeholder="Cari name barang di warehouse ini..."
+                  className="pl-9"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+
+              {/* Tabel Daftar Barang (Scrollable) */}
+              <div className="flex-1 overflow-y-auto mt-4">
+                <SimpleTable>
+                  <thead className="text-xs text-gray-700 uppercase bg-gray-50 sticky top-0">
+                    <tr>
+                      <th className="px-4 py-2">Warehouse</th>
+                      <th className="px-4 py-2">Rak</th>
+                      <th className="px-4 py-2">SKU</th>
+                      <th className="px-4 py-2">Nama</th>
+                      <th className="px-4 py-2">Stok</th>
+                      <th className="px-4 py-2">Min. Stok</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {/* Logika 'filteredItems' tetap bekerja */}
+                    {filteredItems.map((item) => (
+                      <tr key={item.id} className="bg-white border-b">
+                        <td className="px-4 py-2 font-medium">{item.warehouse_name}</td>
+                        <td className="px-4 py-2 font-medium">{item.warehouse_storage_name}</td>
+                        <td className="px-4 py-2 font-medium">{item.product_sku}</td>
+                        <td className="px-4 py-2 font-medium">{item.product_name}</td>
+                        <td className="px-4 py-2 font-medium">{item.stock}</td>
+                        <td className="px-4 py-2 font-medium">{item.min_stock}</td>
+                      </tr>
+                    ))}
+                    {filteredItems.length === 0 && (
+                      <tr>
+                        <td
+                          colSpan={2}
+                          className="text-center text-gray-500 py-6"
+                        >
+                          {searchTerm
+                            ? "Barang tidak ditemukan."
+                            : "Tidak ada barang di warehouse ini."}
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </SimpleTable>
+              </div>
+            </>
+          )}
+
         </DialogContent>
       </Dialog>
     </div>

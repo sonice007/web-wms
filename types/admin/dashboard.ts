@@ -1,15 +1,18 @@
-export interface MonthlyNewAnggota {
-    month: number;
-    count: number;
+export interface DashboardHeader {
+  total_category: number;
+  total_product: number;
+  total_warehouse: number;
+  total_warehouse_storage: number;
 }
 
-export interface DashboardAdmin {
-  total_anggota: number;
-  total_simpatisan: number;
-  total_relawan: number;
-  total_kantor_partai: number;
-  total_kantor_ormas: number;
-  total_posko_relawan: number;
-  monthly_new_anggota: MonthlyNewAnggota[];
-  year: string;
+export interface DashboardPurchaseOrder {
+  month: number;
+  total_product: string | number;
+  total: number;
+}
+
+export interface DashboardSalesOrder {
+  month: number;
+  total_product: string | number;
+  total: number;
 }

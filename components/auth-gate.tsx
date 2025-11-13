@@ -7,8 +7,6 @@ import { getSession } from "next-auth/react";
 // Daftar route publik yang boleh tanpa login
 const PUBLIC_ALLOW: string[] = [
   "/auth/login",
-  "/anggota/login",
-  "/anggota/register",
   "/cek-validasi",
   "/api",
   "/_next",
@@ -34,20 +32,6 @@ export default function AuthGate() {
 
     // Lewatkan route publik & aset supaya tidak loop
     if (isPublicPath(pathname)) return;
-
-    (async () => {
-      const session = await getSession();
-      if (cancelled) return;
-
-      // Jika session kosong => paksa login anggota
-      if (!session) {
-        const qs = searchParams?.toString();
-        const callbackUrl = qs ? `${pathname}?${qs}` : pathname;
-        router.replace(
-          `/anggota/login?callbackUrl=${encodeURIComponent(callbackUrl)}`
-        );
-      }
-    })();
 
     return () => {
       cancelled = true;

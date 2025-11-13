@@ -5,18 +5,25 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import useModal from "@/hooks/use-modal";
 import {
-  useGetBarangListQuery,
+  useGetInventoryListQuery
 } from "@/services/admin/master/barang.service";
-import { Barang } from "@/types/admin/master/barang";
+import {
+  useCreateStockOpnameMutation
+} from "@/services/admin/stock-opname.service";
+import { Barang, Inventory } from "@/types/admin/master/barang";
 import { Input } from "@/components/ui/input";
 import ActionsGroup from "@/components/admin-components/actions-group";
 import { useGetWarehouseListQuery } from "@/services/admin/master/warehouse.service";
 import { useGetRakListQuery } from "@/services/admin/master/rak.service";
 import { useGetKategoriListQuery } from "@/services/admin/master/kategori.service";
-import { Download, Loader2, Plus } from "lucide-react";
+import { Download, Edit, Loader2 } from "lucide-react";
 import FormBarang from "@/components/form-modal/admin/master/barang-form";
 // IMPORT BARU: Import modal detail yang akan kita buat
 import DetailBarangModal from "@/components/modals/barang-detail"; 
+import FormPenyesuaianStok, { ItemUntukPenyesuaian } from "@/components/form-modal/admin/FormPenyesuaianStok";
+import { CreateStockOpnameRequest } from "@/types/admin/stock-opname";
+import { Dialog, DialogContent } from "@/components/ui/dialog"; // Asumsi pakai ShadCN Dialog
+import Swal from "sweetalert2";
 
 export default function BarangPage() {
   const [form, setForm] = useState<Partial<Barang>>({
@@ -33,11 +40,76 @@ export default function BarangPage() {
   const [readonly, setReadonly] = useState(false);
   
   // State untuk Form Modal (Tambah/Edit)
-  const { isOpen: isFormOpen, openModal: openFormModal, closeModal: closeFormModal } = useModal();
-  
+  const { isOpen: isFormOpen, closeModal: closeFormModal } = useModal();
+  const [createStockOpname, { isLoading: isCreating }] = useCreateStockOpnameMutation();
+
   // State BARU: untuk Modal Detail
   const [isDetailOpen, setIsDetailOpen] = useState(false);
-  const [selectedDetailBarang, setSelectedDetailBarang] = useState<Barang | null>(null);
+  const [selectedDetailBarang, setSelectedDetailBarang] = useState<Inventory | null>(null);
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  // State untuk menyimpan item mana yang sedang dipilih
+  const [selectedItem, setSelectedItem] = useState<ItemUntukPenyesuaian | null>(null);
+
+  // State untuk data form
+  const [formState, setFormState] = useState<Partial<CreateStockOpnameRequest>>({});
+  // -----------------------------
+
+  // Fungsi ini dipanggil saat tombol "Penyesuaian" di klik
+  const handleOpenModal = (item: ItemUntukPenyesuaian) => {
+    setSelectedItem(item); // Simpan item yang dipilih
+
+    // ----- INI BAGIAN PENTING -----
+    // Mengisi form state sesuai permintaan Anda
+    setFormState({
+      inventory_id: item.id,       // <-- Sesuai permintaan Anda
+      initial_stock: item.stock, // Ambil stok sistem dari item
+      date: new Date().toISOString().split('T')[0], // Default tanggal hari ini
+      counted_stock: item.stock, // Default stok fisik = stok sistem
+      notes: "",
+    });
+    // -----------------------------
+
+    setIsModalOpen(true); // Buka modal
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedItem(null);
+    setFormState({}); // Kosongkan form state
+  };
+
+  const handleSubmitSuccess = async () => {
+    try {
+      if (
+        !formState.inventory_id ||
+        !formState.date ||
+        formState.initial_stock === undefined ||
+        formState.counted_stock === undefined
+      ) {
+        // Validasi minimal
+        return;
+      }
+      const payload: CreateStockOpnameRequest = {
+        inventory_id: formState.inventory_id,
+        date: formState.date,
+        initial_stock: formState.initial_stock,
+        counted_stock: formState.counted_stock,
+        difference: formState.counted_stock - formState.initial_stock,
+        cogs: 0,
+        total: 0,
+        notes: formState.notes || "",
+      };
+
+      await createStockOpname(payload).unwrap();
+      handleCloseModal();
+      Swal.fire("Sukses", "Barang ditambahkan", "success");
+      refetch();
+    } catch (error) {
+      Swal.fire("Gagal", "Terjadi kesalahan", "error");
+    }
+  };
 
   const itemsPerPage = 10;
   const [currentPage, setCurrentPage] = useState(1);
@@ -51,8 +123,6 @@ export default function BarangPage() {
     undefined
   );
 
-  // ... (SEMUA KODE FILTER WAREHOUSE, RAK, KATEGORI TETAP SAMA) ...
-  // [Kode untuk warehouseSearch, useGetWarehouseListQuery, dropdownWarehouseRef, dst... tidak berubah]
   const [warehouseSearch, setWarehouseSearch] = useState("");
   const { data: warehouseData, isLoading: isWarehouseLoading } = useGetWarehouseListQuery({ page: 1, paginate: 100, search: warehouseSearch });
   const [isDropdownWarehouseOpen, setDropdownWarehouseOpen] = useState(false);
@@ -90,7 +160,6 @@ export default function BarangPage() {
     setDropdownWarehouseOpen(false);
   };
 
-  // [Kode untuk rakSearch, useGetRakListQuery, dropdownRakRef, dst... tidak berubah]
   const [rakSearch, setRakSearch] = useState("");
   const { data: rakData, isLoading: isRakLoading } = useGetRakListQuery({
     page: 1,
@@ -109,7 +178,6 @@ export default function BarangPage() {
       if (selectedRak) setRakSearch(selectedRak.name);
     }
     else if (!filterRakId) {
-      // PERUBAHAN KECIL: Reset rak search jika warehouse di-clear
       setRakSearch("");
     }
   }, [filterRakId, rakData]);
@@ -135,107 +203,37 @@ export default function BarangPage() {
     setFilterRakId(rak.id);
     setRakSearch(rak.name);
     setDropdownRakOpen(false);
-  };
-
-  // [Kode untuk filterKategoriId, kategoriSearch, useGetKategoriListQuery, dst... tidak berubah]
-  const [filterKategoriId, setFilterKategoriId] = useState<number | undefined>(
-    undefined
-  );
-  const [kategoriSearch, setKategoriSearch] = useState("");
-  const { data: kategoriData, isLoading: isKategoriLoading } = useGetKategoriListQuery({ page: 1, paginate: 100, search: kategoriSearch });
-  const [isDropdownKategoriOpen, setDropdownKategoriOpen] = useState(false);
-  const dropdownKategoriRef = useRef<HTMLDivElement>(null);
-  const isKategoriDisabled = false;
-  useEffect(() => {
-    if (filterKategoriId && kategoriData?.data) {
-      const selectedKategori = kategoriData.data.find(
-        (p) => p.id === filterKategoriId
-      );
-      if (selectedKategori) setKategoriSearch(selectedKategori.name);
-    }
-  }, [filterKategoriId, kategoriData]);
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (
-        dropdownKategoriRef.current &&
-        !dropdownKategoriRef.current.contains(event.target as Node)
-      ) {
-        setDropdownKategoriOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [dropdownKategoriRef]);
-  const filteredKategori = useMemo(() => {
-    if (!kategoriData?.data || kategoriSearch.length < 2) return [];
-    return kategoriData.data.filter((kategori) =>
-      kategori.name.toLowerCase().includes(kategoriSearch.toLowerCase())
-    );
-  }, [kategoriSearch, kategoriData]);
-  const handleKategoriSelect = (kategori: { id: number; name: string }) => {
-    setFilterKategoriId(kategori.id);
-    setKategoriSearch(kategori.name);
-    setDropdownKategoriOpen(false);
-  };
-  // ... (AKHIR DARI KODE FILTER) ...
-
-
-  const { data, isLoading, refetch } = useGetBarangListQuery({
+  };  
+  
+  const { data, isLoading, refetch } = useGetInventoryListQuery({
     page: currentPage,
     paginate: itemsPerPage,
     search: query,
-    // PERUBAHAN: Teruskan filter ID ke query
-    // warehouse_id: filterWarehouseId,
-    // rak_id: filterRakId,
-    // product_category_id: filterKategoriId,
+    warehouse_id: filterWarehouseId,
+    warehouse_storage_id: filterRakId,
+    low_stock: undefined,
   });
+
+  useEffect(() => {
+    refetch();
+  }, []);
 
   const barangList = useMemo(() => data?.data || [], [data]);
   const lastPage = useMemo(() => data?.last_page || 1, [data]);
 
-  // PERUBAHAN: handleDetail sekarang membuka Modal Detail
-  const handleDetail = (item: Barang) => {
-    setSelectedDetailBarang(item);
-    setIsDetailOpen(true);
-  };
-
-  // BARU: Fungsi untuk membuka form tambah
-  const handleAdd = () => {
-    setForm({ // Reset form ke default
-      product_category_id: 0,
-      sku: "",
-      name: "",
-      description: "",
-      price: 0,
-      stock: 0,
-      min_stock: 0,
-      unit: "",
-      status: true,
-    });
-    setReadonly(false);
-    openFormModal();
-  };
-
-  // BARU: Fungsi untuk membuka form edit (Asumsi)
-  // Anda bisa meng-hook ini ke ActionsGroup jika ada tombol edit
-  const handleEdit = (item: Barang) => {
-    setForm(item);
-    setReadonly(false);
-    openFormModal();
-  };
-
-  // Filter data berdasarkan search query
   const filteredData = useMemo(() => {
-    // Filtering sisi klien tidak lagi diperlukan jika query API menangani 'search'
-    // return barangList; 
-    
-    // Jika API search belum live, gunakan filter sisi klien ini:
     if (!query) return barangList;
     return barangList.filter(
       (item) =>
-        item.name.toLowerCase().includes(query.toLowerCase())
+        item.warehouse_name.toLowerCase().includes(query.toLowerCase())
     );
   }, [barangList, query]);
+
+
+  const handleDetail = (item: Inventory) => {
+    setSelectedDetailBarang(item);
+    setIsDetailOpen(true);
+  };
 
   return (
     <div className="p-6 space-y-6">
@@ -354,52 +352,6 @@ export default function BarangPage() {
                 )}
               </div>
             </div>
-            <div className="w-full md:w-52">
-              <div className="relative" ref={dropdownKategoriRef}>
-                <Input
-                  id="kategori_id"
-                  placeholder="Filter Kategori..."
-                  value={kategoriSearch}
-                  onChange={(e) => {
-                    setKategoriSearch(e.target.value);
-                    setDropdownKategoriOpen(true);
-                    if (filterKategoriId) {
-                      setFilterKategoriId(undefined);
-                    }
-                    setKategoriSearch(e.target.value);
-                  }}
-                  onFocus={() => setDropdownKategoriOpen(true)}
-                  readOnly={readonly || isKategoriDisabled}
-                  required
-                  autoComplete="off"
-                  disabled={isKategoriDisabled}
-                />
-                {isDropdownKategoriOpen && !isKategoriDisabled && (
-                  <div className="absolute z-10 w-full mt-1 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-md shadow-lg max-h-60 overflow-y-auto">
-                    {isKategoriLoading ? (
-                      <div className="flex items-center justify-center p-4">
-                        <Loader2 className="h-5 w-5 animate-spin" />
-                      </div>
-                    ) : filteredKategori.length > 0 ? (
-                      filteredKategori.map((kategori) => (
-                        <button
-                          type="button"
-                          key={kategori.id}
-                          onClick={() => handleKategoriSelect(kategori)}
-                          className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-zinc-700"
-                        >
-                          {kategori.name}
-                        </button>
-                      ))
-                    ) : (
-                      <p className="text-sm text-gray-500 p-3">
-                        Kategori tidak ditemukan.
-                      </p>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
           </div>
         </div>
         <hr className="my-4" />
@@ -409,13 +361,13 @@ export default function BarangPage() {
               onClick={async () => {
                 // Ambil data yang sudah difilter
                 const exportData = filteredData.map((item) => ({
-                  Kategori: item.category_name,
-                  SKU: item.sku,
-                  Nama: item.name,
-                  Harga: item.price,
+                  "Kode Warehouse": item.warehouse_code,
+                  Warehouse: item.warehouse_name,
+                  Rak: item.warehouse_storage_name,
+                  SKU: item.product_sku,
+                  Nama: item.product_name,
                   Stok: item.stock,
                   "Min. Stok": item.min_stock,
-                  Unit: item.unit,
                   Status: item.status ? "Aktif" : "Tidak Aktif",
                 }));
 
@@ -443,15 +395,12 @@ export default function BarangPage() {
             <thead className="bg-muted text-left">
               <tr>
                 <th className="px-4 py-2">Aksi</th>
-                <th className="px-4 py-2">Kategori</th>
+                <th className="px-4 py-2">Warehouse</th>
+                <th className="px-4 py-2">Rak</th>
                 <th className="px-4 py-2">SKU</th>
                 <th className="px-4 py-2">Nama</th>
-                {/* <th className="px-4 py-2">Deskripsi</th> */}
-                <th className="px-4 py-2">Harga</th>
                 <th className="px-4 py-2">Stok</th>
                 <th className="px-4 py-2">Min. Stok</th>
-                <th className="px-4 py-2">Unit</th>
-                <th className="px-4 py-2">Status</th>
               </tr>
             </thead>
             <tbody>
@@ -472,40 +421,48 @@ export default function BarangPage() {
                   <tr key={item.id} className="border-t">
                     <td className="px-4 py-2">
                       <div className="flex gap-2">
+                        <Button 
+                          variant="outline"
+                          size="sm"
+                          title="Stock Opname"
+                          onClick={() => handleOpenModal(item as ItemUntukPenyesuaian)}
+                        >
+                          <Edit className="w-4 h-4 mr-2" />
+                          Stok
+                        </Button>
                         <ActionsGroup
                           handleDetail={() => handleDetail(item)}
-                          // Asumsi Anda memiliki handleEdit dan handleDelete
-                          // handleEdit={() => handleEdit(item)}
                           // handleDelete={() => handleDelete(item.id)}
                         />
                       </div>
                     </td>
-                    <td className="px-4 py-2 font-medium">{item.category_name}</td>
-                    <td className="px-4 py-2 font-medium">{item.sku}</td>
-                    <td className="px-4 py-2 font-medium">{item.name}</td>
-                    {/* <td className="px-4 py-2 font-medium">{item.description}</td> */}
-                    <td className="px-4 py-2 font-medium">
-                      {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(item.price ?? 0)}
-                    </td>
+                    <td className="px-4 py-2 font-medium">{item.warehouse_name}</td>
+                    <td className="px-4 py-2 font-medium">{item.warehouse_storage_name}</td>
+                    <td className="px-4 py-2 font-medium">{item.product_sku}</td>
+                    <td className="px-4 py-2 font-medium">{item.product_name}</td>
                     <td className="px-4 py-2 font-medium">{item.stock}</td>
                     <td className="px-4 py-2 font-medium">{item.min_stock}</td>
-                    <td className="px-4 py-2 font-medium">{item.unit}</td>
-                    <td className="px-4 py-2 font-medium">
-                      <span
-                        className={`inline-block px-2 py-1 rounded text-xs font-semibold ${
-                          item.status
-                            ? "bg-green-100 text-green-700"
-                            : "bg-red-100 text-red-700"
-                        }`}
-                      >
-                        {item.status ? "Aktif" : "Tidak Aktif"}
-                      </span>
-                    </td>
                   </tr>
                 ))
               )}
             </tbody>
           </table>
+          {/* ----- MODAL DI LUAR TABEL ----- */}
+          <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+            <DialogContent 
+              className="p-0" 
+              onEscapeKeyDown={handleCloseModal}
+              onInteractOutside={handleCloseModal}
+            >
+              <FormPenyesuaianStok
+                item={selectedItem}
+                form={formState}
+                setForm={setFormState}
+                onCancel={handleCloseModal}
+                onSubmit={handleSubmitSuccess}
+              />
+            </DialogContent>
+          </Dialog>
         </CardContent>
 
         <div className="p-4 flex items-center justify-between bg-muted">

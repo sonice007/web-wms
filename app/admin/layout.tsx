@@ -4,19 +4,17 @@ import React, { useState, useEffect } from "react";
 import {
   LayoutDashboard,
   Building2,
-  Megaphone,
   Settings,
   Network,
   UserCog,
   ShieldCheck,
-  Package, // <-- Ikon baru untuk Barang
-  Archive, // <-- Ikon baru untuk Rak
-  ArrowLeftRight, // <-- Ikon baru untuk Transaksi
-  PackagePlus, // <-- Ikon baru untuk Barang Masuk
-  PackageMinus, // <-- Ikon baru untuk Barang Keluar
+  Package,
+  Archive,
+  ArrowLeftRight,
+  PackagePlus,
+  PackageMinus,
   TrendingUp,
-  CardSim,
-  IdCard, // <-- Ikon baru untuk Prediksi
+  IdCard,
 } from "lucide-react";
 import Header from "@/components/admin-components/header";
 import Sidebar from "@/components/admin-components/sidebar";
@@ -147,25 +145,19 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, title }) => {
           id: "konfigurasi/klasifikasi",
           label: "Klasifikasi",
           icon: <Network className="h-4 w-4" />,
-          href: "/admin/master/klasifikasi",
-        },
-        {
-          id: "konfigurasi/prediksi-stok",
-          label: "Prediksi Stok",
-          icon: <TrendingUp className="h-4 w-4" />,
-          href: "/admin/master/prediksi-stok",
+          href: "/admin/konfigurasi/klasifikasi",
         },
         {
           id: "konfigurasi/pengelola",
           label: "Data Pengguna",
           icon: <UserCog className="h-4 w-4" />,
-          href: "/admin/pengelola",
+          href: "/admin/konfigurasi/pengelola",
         },
         {
           id: "konfigurasi/role",
           label: "Role",
           icon: <ShieldCheck className="h-4 w-4" />,
-          href: "/admin/role",
+          href: "/admin/konfigurasi/role",
         },
       ],
     },

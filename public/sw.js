@@ -1,5 +1,5 @@
 /* Minimal service worker for offline caching (basic). */
-const CACHE_NAME = 'digital-kta-v1';
+const CACHE_NAME = 'wharehouse-management-system-v1';
 const urlsToCache = [
   '/',
   '/favicon.ico',
