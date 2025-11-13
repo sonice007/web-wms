@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, forwardRef, ElementType, ReactNode } from "react";
 import { FaWhatsapp, FaTiktok } from "react-icons/fa"; // Ikon dari react-icons
+import Link from "next/link";
 import {
   Package,
   PackageSearch,
@@ -15,7 +16,6 @@ import {
   X,
   Instagram,
   PlayCircle,
-  Link,
 } from "lucide-react";
 
 type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
@@ -161,27 +161,27 @@ export default function App() {
       {/* 3.1. Header / Navigasi */}
       <header className="bg-white/95 sticky top-0 z-50 shadow-md backdrop-blur-md transition-shadow duration-500">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <Link
-            href="/"
-            className="flex items-center gap-2 text-2xl font-extrabold text-blue-700 transition-colors hover:text-blue-500"
-          >
-            <Package className="w-7 h-7" />
-            <span>Warehouse MS</span>
-          </Link>
+            <Link
+              href="/"
+              className="flex items-center gap-2 text-2xl font-extrabold text-blue-700 transition-colors hover:text-blue-500"
+            >
+              <Package className="w-7 h-7" />
+              <span>Warehouse MS</span>
+            </Link>
 
-          {/* Navigasi Desktop */}
-          <div className="hidden md:flex items-center space-x-8">
-            {navItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="text-gray-600 hover:text-blue-600 transition-colors font-medium relative group"
-              >
-                {item.label}
-                <span className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></span>
-              </Link>
-            ))}
-          </div>
+            {/* Navigasi Desktop */}
+            <div className="hidden md:flex items-center space-x-8">
+              {navItems.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="text-gray-600 hover:text-blue-600 transition-colors font-medium relative group"
+                >
+                  {item.label}
+                  <span className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></span>
+                </Link>
+              ))}
+            </div>
 
           {/* Tombol Aksi Desktop */}
           <div className="hidden md:flex items-center space-x-3">
