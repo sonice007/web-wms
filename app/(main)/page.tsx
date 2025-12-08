@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, forwardRef, ElementType, ReactNode } from "react";
-import { FaWhatsapp, FaTiktok } from "react-icons/fa"; // Ikon dari react-icons
+import { FaWhatsapp, FaTiktok } from "react-icons/fa";
 import Link from "next/link";
 import {
   Package,
@@ -18,6 +18,7 @@ import {
   PlayCircle,
 } from "lucide-react";
 
+// --- 1. FIXED BUTTON COMPONENT ---
 type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
   className?: string;
   variant?: "default" | "secondary" | "outline";
@@ -33,6 +34,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       variant = "default",
       size = "default",
       asChild = false,
+      children,
       ...props
     },
     ref
@@ -54,21 +56,30 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       lg: "h-12 px-6 py-3 text-base",
     };
 
-    const Comp =
-      asChild && React.isValidElement(props.children)
-        ? props.children.type
-        : "button";
-
     const finalClasses = `${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${className}`;
 
+    // PERBAIKAN: Jika asChild, kita clone element anaknya dan gabungkan className
+    // Ini mencegah error nesting <a> di dalam <a>
+    if (asChild && React.isValidElement(children)) {
+      const child = children as React.ReactElement;
+      return React.cloneElement(child, {
+        className: `${finalClasses} ${child.props.className || ""}`,
+        ...props, // Pass sisa props (seperti onClick)
+        // @ts-ignore - mengabaikan masalah ref typing yang kompleks pada cloneElement
+        ref: ref, 
+      });
+    }
+
     return (
-      <Comp ref={ref} className={finalClasses} {...props}>
-        {props.children}
-      </Comp>
+      <button ref={ref} className={finalClasses} {...props}>
+        {children}
+      </button>
     );
   }
 );
 Button.displayName = "Button";
+
+// --- 2. COMPONENTS ---
 
 interface FeatureCardProps {
   icon: ElementType;
@@ -104,7 +115,7 @@ function VideoModal({ isOpen, onClose, videoSrc }: VideoModalProps) {
     >
       <div
         className="relative w-full max-w-5xl aspect-video bg-black rounded-lg shadow-2xl m-4"
-        onClick={(e) => e.stopPropagation()} // Mencegah modal tertutup saat klik video
+        onClick={(e) => e.stopPropagation()}
       >
         <button
           onClick={onClose}
@@ -127,18 +138,18 @@ function VideoModal({ isOpen, onClose, videoSrc }: VideoModalProps) {
   );
 }
 
-// 4. Interface untuk Navigasi (TSX)
 interface NavItem {
   href: string;
   label: string;
 }
 
-// 5. Komponen Halaman Utama (Landing Page)
+// --- 3. MAIN PAGE ---
 export default function App() {
   const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
   const [isVideoModalOpen, setIsVideoModalOpen] = useState<boolean>(false);
 
   useEffect(() => {
+    // Memastikan styling smooth scroll hanya di client
     document.documentElement.style.scrollBehavior = "smooth";
     return () => {
       document.documentElement.style.scrollBehavior = "auto";
@@ -152,13 +163,12 @@ export default function App() {
   ];
 
   const handleNavLinkClick = (): void => {
-    // Menutup menu mobile saat link diklik
     setIsMenuOpen(false);
   };
 
   return (
     <div className="flex flex-col min-h-screen bg-white font-sans text-gray-800">
-      {/* 3.1. Header / Navigasi */}
+      {/* HEADER */}
       <header className="bg-white/95 sticky top-0 z-50 shadow-md backdrop-blur-md transition-shadow duration-500">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
             <Link
@@ -185,8 +195,9 @@ export default function App() {
 
           {/* Tombol Aksi Desktop */}
           <div className="hidden md:flex items-center space-x-3">
+            {/* PERBAIKAN: Gunakan Link Next.js, bukan tag a biasa untuk rute internal */}
             <Button asChild className="transition-all hover:bg-blue-500">
-              <a href="/auth/login">Masuk</a>
+              <Link href="/auth/login">Masuk</Link>
             </Button>
           </div>
 
@@ -216,10 +227,10 @@ export default function App() {
               ))}
               <div className="pt-2 flex flex-col space-y-2">
                 <Button asChild variant="outline">
-                  <a href="/auth/login" onClick={handleNavLinkClick}>Masuk</a>
+                  <Link href="/auth/login" onClick={handleNavLinkClick}>Masuk</Link>
                 </Button>
                 <Button asChild>
-                  <a href="/auth/register" onClick={handleNavLinkClick}>Daftar Gratis</a>
+                  <Link href="/auth/register" onClick={handleNavLinkClick}>Daftar Gratis</Link>
                 </Button>
               </div>
             </nav>
@@ -228,6 +239,7 @@ export default function App() {
       </header>
 
       <main>
+        {/* HERO SECTION */}
         <section className="bg-white pt-24 pb-20 md:pt-24 md:pb-28 overflow-hidden relative">
           <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 to-white/50 pointer-events-none"></div>
           
@@ -247,9 +259,9 @@ export default function App() {
                 size="lg"
                 className="w-full sm:w-auto text-lg font-semibold px-8 py-6 shadow-blue-500/50 transition-transform hover:scale-105"
               >
-                <a href="/auth/login" className="flex justify-center items-center w-full">
+                <Link href="/auth/login" className="flex justify-center items-center w-full">
                   Demo Aplikasi <ArrowRight className="w-5 h-5 ml-2" />
-                </a>
+                </Link>
               </Button>
               <Button
                 asChild
@@ -271,6 +283,7 @@ export default function App() {
                 <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10 duration-300">
                   <PlayCircle className="w-24 h-24 text-white/80 transform scale-90 group-hover:scale-100 transition-transform duration-300" />
                 </div>
+                {/* Ganti src dengan gambar placeholder yang valid atau pastikan path benar */}
                 <img
                   src="/video-demo.gif"
                   alt="Pratinjau Dashboard WMS"
@@ -281,6 +294,7 @@ export default function App() {
           </div>
         </section>
 
+        {/* PROFILE SECTION */}
         <section id="tentang-saya" className="py-20 md:py-32 bg-gray-50/70">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex flex-col md:flex-row items-center gap-12 md:gap-20">
@@ -357,6 +371,7 @@ export default function App() {
           </div>
         </section>
 
+        {/* FEATURES SECTION */}
         <section id="fitur" className="py-20 md:py-32 bg-white">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-16">
@@ -391,6 +406,7 @@ export default function App() {
           </div>
         </section>
 
+        {/* CTA SECTION */}
         <section id="cta" className="py-20 md:py-28 bg-blue-700 text-white shadow-inner">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight">
@@ -427,7 +443,10 @@ export default function App() {
         videoSrc="/video-demo.mp4" 
       />
       
-      <style jsx global>{`
+      {/* PERBAIKAN: Menggunakan tag <style> standar agar lebih aman di Next.js App Router 
+         jika registry styled-jsx tidak terkonfigurasi.
+      */}
+      <style>{`
         html {
           scroll-behavior: smooth;
         }

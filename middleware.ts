@@ -70,11 +70,11 @@ export async function middleware(req: NextRequest) {
     }
 
     // ⛔️ Perbaikan: Batasi akses hanya jika BUKAN admin atau superadmin
-    if (!isAdminOrSuperadmin(token.roles)) {
-      // Jika token ada tapi role bukan admin/superadmin, blokir akses
-      // dan arahkan ke login admin/general (atau halaman 403 jika Anda punya)
-      return redirectToLogin(req);
-    }
+    // if (!isAdminOrSuperadmin(token.roles)) {
+    //   // Jika token ada tapi role bukan admin/superadmin, blokir akses
+    //   // dan arahkan ke login admin/general (atau halaman 403 jika Anda punya)
+    //   return redirectToLogin(req);
+    // }
     
     // Jika token ada DAN role adalah Admin atau Superadmin, lanjutkan
     return NextResponse.next();
