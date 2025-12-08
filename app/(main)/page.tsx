@@ -58,15 +58,14 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 
     const finalClasses = `${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${className}`;
 
-    // PERBAIKAN: Jika asChild, kita clone element anaknya dan gabungkan className
-    // Ini mencegah error nesting <a> di dalam <a>
+    // --- BAGIAN PERBAIKAN DI SINI ---
     if (asChild && React.isValidElement(children)) {
-      const child = children as React.ReactElement;
+      // Kita melakukan Type Assertion (as) agar TS tahu child punya className
+      const child = children as React.ReactElement<{ className?: string }>;
+      
       return React.cloneElement(child, {
         className: `${finalClasses} ${child.props.className || ""}`,
-        ...props, // Pass sisa props (seperti onClick)
-        // @ts-ignore - mengabaikan masalah ref typing yang kompleks pada cloneElement
-        ref: ref, 
+        ...props,
       });
     }
 
