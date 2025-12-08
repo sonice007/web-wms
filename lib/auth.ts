@@ -36,7 +36,7 @@ export const authOptions: AuthOptions = {
         const loginData = await loginRes.json();
         if (!loginRes.ok || !loginData?.data?.token) return null;
         const token: string = loginData.data.token;
-
+        console.log("Obtained token:", loginData);
         // 2) /me
         const meRes = await fetch(
           `${process.env.NEXT_PUBLIC_API_BASE_URL}/me?forceRefresh=1`,
@@ -62,10 +62,10 @@ export const authOptions: AuthOptions = {
           email_verified_at: user.email_verified_at,
           created_at: user.created_at,
           updated_at: user.updated_at,
-          anggota: user.anggota,
+          anggota: user?.anggota,
           roles: user.roles,
-          refferal: user.refferal,
-          referrer: user.referrer,
+          refferal: user?.refferal,
+          referrer: user?.referrer,
         };
       },
     }),
@@ -86,16 +86,7 @@ export const authOptions: AuthOptions = {
         token.updated_at = (
           user as unknown as { updated_at: string }
         ).updated_at;
-        token.anggota = (
-          user as unknown as { anggota: User["anggota"] }
-        ).anggota;
         token.roles = (user as unknown as { roles: User["roles"] }).roles;
-        token.refferal = (
-          user as unknown as { refferal: User["refferal"] }
-        ).refferal;
-        token.referrer = (
-          user as unknown as { referrer: User["referrer"] }
-        ).referrer;
       }
       return token;
     },
@@ -110,10 +101,7 @@ export const authOptions: AuthOptions = {
           | null;
         session.user.created_at = token.created_at as string;
         session.user.updated_at = token.updated_at as string;
-        session.user.anggota = token.anggota as User["anggota"];
         session.user.roles = token.roles as User["roles"];
-        session.user.refferal = token.refferal as User["refferal"];
-        session.user.referrer = token.referrer as User["referrer"];
       }
       return session;
     },
